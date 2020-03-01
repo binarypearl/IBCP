@@ -37,7 +37,7 @@ Cozmo to Vector interaction
 
 and even more even more cool interaction:
 
-multiplayer action of both Cozmo and Vector over both LAN and WAN.
+multiplayer action of both Cozmo and Vector over both LAN and WAN. 
 
 Soon over time I plan to introduce a NumberGuesser game where a robot picks a random number between 1 and 100,
 and another robot tries to guess that number in as few guesses as possible.  Once this is working,
