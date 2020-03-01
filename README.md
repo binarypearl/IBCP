@@ -21,7 +21,7 @@ The higher level concepts of say, move, and animate are the same.  The implement
 
 The way it works is that each robot has a queue.  If the robot receives a message, it acts on that message appropriately.
 
-For example, lets say robot1 sends a message "Hello robot2! to robot2".  robot1 will send a MQ message to robot2.  
+For example, lets say robot1 sends a message "Hello robot2! to robot2.  robot1 will send a MQ message to robot2.  
 Robot2 will see the message and respond "Hello robot1!".
 
 The inner guts of the code has to determine if the robot to perform the action is Cozmo or Vector.
