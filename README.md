@@ -27,7 +27,7 @@ Robot2 will see the message and respond "Hello robot1!".
 The inner guts of the code has to determine if the robot to perform the action is Cozmo or Vector.
 But basically:  if we are a cozmo robot, use appropriate code, else if we are vector use appropriate code.
 
-The end result:  We have a method for:
+The end result:  We have a method for:  
 Cozmo to Cozmo interaction   
 
 Vector to Vector interaction  
