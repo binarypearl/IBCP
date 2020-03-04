@@ -13,8 +13,8 @@ if __name__ == '__main__':
     signal(SIGINT, handler)
 
 first_robot = "0060100c"
-#second_robot = "0060689b"
-second_robot = "45a28d52"
+second_robot = "0060689b"
+#second_robot = "45a28d52"
 
 list_of_child_pids = []
 list_of_active_robots = []
@@ -24,7 +24,7 @@ list_of_active_robots.append(second_robot)
 
 # Start a conversion_receive.py for each robot:
 for active_robot in list_of_active_robots:
-     process_robot = Popen(['/mnt/backups/anki/ibcp/applications/conversation/conversation_receive.py', '-s', active_robot])
+     process_robot = Popen(['/mnt/backups/anki/IBCP/applications/conversation/conversation_receive.py', '-s', active_robot])
      #stdout,stderr = process_robot.communicate()
 
      print ("If this worked, we just started conversion_receive for robot: " + active_robot)
@@ -34,7 +34,7 @@ for active_robot in list_of_active_robots:
      list_of_child_pids.append(process_robot.pid)
 
 # Lets just call conversation_send.py with no parameters for now.
-process = Popen(['/mnt/backups/anki/ibcp/applications/conversation/conversation_send.py'], stdout=PIPE, stderr=PIPE)
+process = Popen(['/mnt/backups/anki/IBCP/applications/conversation/conversation_send.py'], stdout=PIPE, stderr=PIPE)
 stdout, stderr = process.communicate()
 
 print ("stdout is: " + stdout.decode('utf-8'))

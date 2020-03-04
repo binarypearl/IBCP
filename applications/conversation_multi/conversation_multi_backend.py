@@ -19,36 +19,39 @@ class MyListener(stomp.ConnectionListener):
         if match_object:
             message_queue.append(match_object)
 
-def the_application(the_robot):
+def the_application(the_robot, serial_number):
+    list_of_robots_in_game = []
+    enough_players = False
+
+    conn.subscribe(destination='/queue/' + serial_number, id=1, ack='auto')
+
+    while not enough_players:
+        # subscribe and get message of queue if command==room,payload=room_name
+
+        for message in message_queue:
+            to_robot = msg.group(1)
+            from_robot = msg.group(3)
+            command = msg.group(5)
+            payload = msg.group(7)
+
+            #if command == "join_room":
+                #fjdksl
+
+
+            #if (len(list_robots_to_play) == 2):
+            #enough_players = True
+
+    # now start real game:
+
     if cozmo_supported:
         the_robot.say_text("SYN").wait_for_completed()
 
     elif vector_supported:
         the_robot.behavior.say_text("SYN")
 
+# Begin main code:
 cozmo_supported = False
 vector_supported = False
-
-try:
-    import cozmo
-    cozmo_supported = True
-    import cozmo
-    print ("cozmo sdk found")
-
-    def cozmo_program(robot: cozmo.robot.Robot):
-        the_application(robot)
-        #robot.say_text("Hello World").wait_for_completed()
-
-except ModuleNotFoundError:
-    print ("cozmo sdk not found, cozmo robots are not supported on this computer.")
-
-try:
-    import anki_vector
-    vector_supported = True
-    print ("vector sdk found")
-
-except ModuleNotFoundError:
-    print ("vector sdk not found, vector robots are not supported on this computer.")
 
 serial_number_robot = ""
 
@@ -61,6 +64,27 @@ for opt, arg in opts:
 if not serial_number_robot:
     print ("Usage: conversation_multi_backend.py -s serial_number")
     exit(1)
+
+try:
+    import cozmo
+    cozmo_supported = True
+    import cozmo
+    print ("cozmo sdk found")
+
+    def cozmo_program(robot: cozmo.robot.Robot):
+        the_application(robot, serial_number_robot)
+        #robot.say_text("Hello World").wait_for_completed()
+
+except ModuleNotFoundError:
+    print ("cozmo sdk not found, cozmo robots are not supported on this computer.")
+
+try:
+    import anki_vector
+    vector_supported = True
+    print ("vector sdk found")
+
+except ModuleNotFoundError:
+    print ("vector sdk not found, vector robots are not supported on this computer.")
 
 if cozmo_supported:
     try:
@@ -75,7 +99,7 @@ elif vector_supported:
             with anki_vector.Robot(args.serial) as robot:
 
                 #robot.behavior.say_text("Hello World")
-                the_application(robot)
+                the_application(robot, serial_number_robot)
     except:
         print ("Trouble running vector code")
 else:
