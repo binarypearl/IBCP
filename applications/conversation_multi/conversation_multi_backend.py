@@ -4,6 +4,7 @@ import getopt
 import sys
 import re
 import stomp
+import time
 
 # This class may or may not be needed in send...
 class MyListener(stomp.ConnectionListener):
@@ -20,36 +21,56 @@ class MyListener(stomp.ConnectionListener):
             message_queue.append(match_object)
 
 def the_application(the_robot, serial_number):
+    global message_queue
     list_of_robots_in_game = []
-    enough_players = False
+    play_yes = False
+    first_robot = ""
+    second_robot = ""
 
-    conn.subscribe(destination='/queue/' + serial_number, id=1, ack='auto')
+    try:
+        conn = stomp.Connection([('192.168.1.153', 61613)])
+        conn.set_listener('', MyListener())
 
-    while not enough_players:
-        # subscribe and get message of queue if command==room,payload=room_name
+        conn.connect('admin', 'admin', wait=True)
+
+    except Exception as e:
+        print ("error: " + str(e))
+
+    conn.subscribe(destination='/queue/' + serial_number, id=2, ack='auto')
+
+    while not play_yes:
+        print ("backend waiting for play_request")
 
         for message in message_queue:
-            to_robot = msg.group(1)
-            from_robot = msg.group(3)
-            command = msg.group(5)
-            payload = msg.group(7)
+            to_robot = message.group(1)
+            from_robot = message.group(3)
+            command = message.group(5)
+            payload = message.group(7)
 
-            #if command == "join_room":
-                #fjdksl
+            if command == "play_request":
+                conn.send(body=from_robot + ":" + to_robot + ':' + "play_yes" + ":" +
+                            "conversation_multi", destination="/queue/" + from_robot)
+
+            elif command == "play_yes":
+                play_yes = True
+
+                if payload == "first":
+                    first_robot = to_robot
+                elif payload == "second":
+                    second_robot = to_robot
+
+        time.sleep(1)
 
 
-            #if (len(list_robots_to_play) == 2):
-            #enough_players = True
+    if first_robot == serial_number:
+        if cozmo_supported:
+            the_robot.say_text("SYN").wait_for_completed()
 
-    # now start real game:
-
-    if cozmo_supported:
-        the_robot.say_text("SYN").wait_for_completed()
-
-    elif vector_supported:
-        the_robot.behavior.say_text("SYN")
+        elif vector_supported:
+            the_robot.behavior.say_text("SYN")
 
 # Begin main code:
+message_queue = []
 cozmo_supported = False
 vector_supported = False
 
