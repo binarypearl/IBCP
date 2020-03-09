@@ -2,6 +2,7 @@
 
 import sys
 import re
+import os
 import getopt
 import stomp
 import time
@@ -120,6 +121,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                 print ("What is modified player_one_serial: " + player_one_serial)
                 print ("What is modified player_two_serial: " + player_two_serial)
 
+                #message_queue.remove(message)
+
             elif play_yes:
                 # I guess now we play game:
                 if not initial_send:
@@ -183,6 +186,10 @@ message_queue = []
 cozmo_supported = False
 vector_supported = False
 final_path = ""
+player_one_model_and_serial = ""
+player_two_model_and_serial = ""
+player_one_model = ""
+player_two_model = ""
 player_one_serial = ""
 player_two_serial = ""
 
@@ -190,10 +197,10 @@ opts, args = getopt.getopt(sys.argv[1:], 'c:', ['p1=', 'p2='])
 
 for opt, arg in opts:
     if opt == "--p1":
-        player_one_serial = arg
+        player_one_model_and_serial = arg
 
     elif opt == "--p2":
-        player_two_serial = arg
+        player_two_model_and_serial = arg
 
     elif opt == "-c":
         config_file = arg
@@ -204,6 +211,18 @@ try:
 except:
     print ("Couldn't open config file")
     exit(1)
+
+# parse out model and serial number:
+mo1 = re.search('(.*?)(:)(.*)', player_one_model_and_serial)
+mo2 = re.search('(.*?)(:)(.*)', player_two_model_and_serial)
+
+if mo1:
+    player_one_model = mo1.group(1)
+    player_one_serial = mo1.group(3)
+
+if mo2:
+    player_two_model = mo2.group(1)
+    player_two_serial = mo2.group(3)
 
 config_file_lines = config_file_object.readlines()
 
@@ -244,17 +263,23 @@ print ("what is final_path: " + final_path)
 try:
     import cozmo
     cozmo_supported = True
-    import cozmo
     print ("cozmo sdk found")
 
     def cozmo_program(robot: cozmo.robot.Robot):
-        # ***NOTE***!  At a minimum, test if p1 or p2 and pass in appropriate robot object
-        if player_one_serial:
-            the_application(robot, "cozmo", "", "", player_one_serial, player_two_serial)
+        print ("p1m: " + player_one_model)
+        print ("p2m: " + player_two_model)
+        print ("p1: " + player_one_serial)
+        print ("p2: " + player_two_serial)
 
-        elif player_two_serial:
-            the_application("", "", robot, "cozmo", player_one_serial, player_two_serial)
+        # two cozmo's not yet supported...have to figure out what that looks like
+        #if player_one_model == "vector" and player_two_model == "vector":
+        #    the_application(robot1, player_one_model, robot2, player_two_model, player_one_serial, player_two_serial)
 
+        if player_one_model == "cozmo" and player_two_model != "cozmo":
+            the_application(robot, player_one_model, "", "", player_one_serial, player_two_serial)
+
+        elif player_one_model != "cozmo" and player_two_model == "cozmo":
+            the_application("", "", robot, player_two_model, player_one_serial, player_two_serial)
 
 except ModuleNotFoundError:
     print ("cozmo sdk not found, cozmo robots are not supported on this computer.")
@@ -270,27 +295,29 @@ except ModuleNotFoundError:
 if cozmo_supported:
     try:
         cozmo.run_program(cozmo_program)
-    except Exception as e:
-        print ("Trouble running cozmo code: " + str(e))
+    except:
+        print ("Trouble running cozmo code: ")
 
-elif vector_supported:
+if vector_supported:
     try:
         def vector_code():
+            print ("p1m: " + player_one_model)
+            print ("p2m: " + player_two_model)
             print ("p1: " + player_one_serial)
             print ("p2: " + player_two_serial)
 
-            if player_one_serial and player_two_serial:
+            if player_one_model == "vector" and player_two_model == "vector":
                 with anki_vector.Robot(player_one_serial) as robot1:
                     with anki_vector.Robot(player_two_serial) as robot2:
-                        the_application(robot1, "vector", robot2, "vector", player_one_serial, player_two_serial)
+                        the_application(robot1, player_one_model, robot2, player_two_model, player_one_serial, player_two_serial)
 
-            elif player_one_serial and not player_two_serial:
+            elif player_one_model == "vector" and player_two_model != "vector":
                 with anki_vector.Robot(player_one_serial) as robot1:
-                    the_application(robot1, "vector", "", "", player_one_serial, player_two_serial)
+                    the_application(robot1, player_one_model, "", "", player_one_serial, player_two_serial)
 
-            elif not player_one_serial and player_two_serial:
+            elif player_one_model != "vector" and player_two_model == "vector":
                 with anki_vector.Robot(player_two_serial) as robot2:
-                    the_application("", "", robot2, "vector" ,player_one_serial, player_two_serial)
+                    the_application("", "", robot2, player_two_model, player_one_serial, player_two_serial)
 
     except:
         print ("Trouble running vector code")
