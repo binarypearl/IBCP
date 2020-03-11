@@ -54,6 +54,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     game_complete = False
     initial_send = False
     player_one_serial_saved = player_one_serial
+    number_to_guess = 0
+    prior_guess_was = "initial_guess"
 
     print ("player_one_serial is: " + player_one_serial)
     print ("player_two_serial is: " + player_two_serial)
@@ -95,8 +97,10 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
             print ("to_robot: " + to_robot)
             print ("from_robot: " + from_robot)
-            print ("command: " + command)
-            print ("payload: " + payload)
+            print ("command: ***" + command + "***")
+            print ("payload: ***" + payload + "***")
+            #print ("number_to_guess: ***" + str(number_to_guess) + "***")
+            print ("magic number is: " + str(magic_number))
 
             if not play_yes:
                 print ("We are in if not play_yes code")
@@ -131,7 +135,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
             elif play_yes:
                 # I guess now we play game:
-                number_to_guess = 0
+
 
                 if not initial_send:
                     print ("player_one_serial_saved: " + player_one_serial_saved)
@@ -157,7 +161,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                                 + payload, destination="/queue/" + player_two_serial)
 
                 elif command == "said" and re.search('Guess a number', payload):
-                    number_to_guess = engine_object.guess_a_number()
+                    print ("OK: WHAT IS engine_object.get_current_min(): " + str(engine_object.get_current_min()))
+                    print ("OK: WHAT IS engine_object.get_current_max(): " + str(engine_object.get_current_max()))
+                    number_to_guess = engine_object.guess_a_number(prior_guess_was, engine_object.get_current_min(), engine_object.get_current_max())
 
                     print ("player 2 is guesing: " + str(number_to_guess))
 
@@ -170,17 +176,19 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                                 + str(number_to_guess), destination="/queue/" + player_one_serial)
 
                 # This is where I'm current at...
-                elif command == "said" and payload == number_to_guess:
+                elif command == "said" and payload == str(number_to_guess):
                     if number_to_guess < engine_object.get_current_min() or number_to_guess > engine_object.get_current_max():
                         text_to_say = "Number out of range!"
 
                     elif number_to_guess < magic_number:
                         text_to_say = "Number too low!"
+                        prior_guess_was = "too_low"
                         engine_object.set_current_min(number_to_guess)
                         engine_object.increase_user_guess_count(1)
 
                     elif number_to_guess > magic_number:
                         text_to_say = "Number too high!"
+                        prior_guess_was = "too_high"
                         engine_object.set_current_max(number_to_guess)
                         engine_object.increase_user_guess_count(1)
 
@@ -188,11 +196,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         engine_object.increase_user_guess_count(1)
 
                         if engine_object.get_user_guess_count() == 1:
-                            text_to_say = "You guessed it!  The magic number was " + magic_number
-                            + " and it took you " + str(engine_object.get_user_guess_count()) + " guess!"
+                            text_to_say = "You guessed it!  The magic number was " + str(magic_number) + " and it took you " + str(engine_object.get_user_guess_count()) + " guess!"
                         else:
-                            text_to_say = "You guessed it!  The magic number was " + magic_number
-                            + " and it took you " + str(engine_object.get_user_guess_count()) + " guesses!"
+                            text_to_say = "You guessed it!  The magic number was " + str(magic_number) + " and it took you " + str(engine_object.get_user_guess_count()) + " guesses!"
 
                     if robot1_model == "cozmo":
                         robot1.say_text(text_to_say, duration_scalar=0.6).wait_for_completed()
@@ -204,9 +210,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_two_serial)
 
                     else:
-                        conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
-                            "Guess a number between " + engine_object.get_current_min() + " and " +
-                            engine_object.get_current_max(), destination="/queue/" + player_one_serial)
+                        conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
+                            "Guess a number between " + str(engine_object.get_current_min()) + " and " +
+                            str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
 
                 elif command == "ENDAPP":
                     game_complete = True

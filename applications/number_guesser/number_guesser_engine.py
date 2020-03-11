@@ -41,7 +41,20 @@ class number_guesser_engine:
     def get_current_max(self):
         return (self.__current_max)
 
-    def guess_a_number(self):
-        midpoint = ((self.__current_max - self.__current_min + 1) // 2)
+    def guess_a_number(self, too_low_or_too_high, cur_min, cur_max):
+        guess = "oops"
 
-        return (midpoint)
+        if too_low_or_too_high == "initial_guess":
+            guess = 50
+
+        elif too_low_or_too_high == "too_high":
+            guess = ((cur_max - cur_min) // 2) + cur_min
+
+            print ("too high so guess = " + str(cur_max) + " and we divide that by 2 to give us: " + str(guess))
+
+        elif too_low_or_too_high == "too_low":
+            guess = ((cur_max - cur_min) // 2) + cur_min
+
+            print ("too low so guess = " + str(cur_max) + " minus " + str(cur_min) + " and we divide that by 2 and add back in cur_min to give us: " + str(guess))
+
+        return (guess)
