@@ -7,6 +7,7 @@ import getopt
 import stomp
 import time
 import requests
+import traceback
 from sys import platform
 
 from number_guesser_engine import number_guesser_engine
@@ -55,7 +56,6 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     initial_send = False
     player_one_serial_saved = player_one_serial
     number_to_guess = 0
-    prior_guess_was = "initial_guess"
 
     print ("player_one_serial is: " + player_one_serial)
     print ("player_two_serial is: " + player_two_serial)
@@ -158,12 +158,22 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot1.behavior.say_text(payload)
 
                     conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
-                                + payload, destination="/queue/" + player_two_serial)
+                                + payload  + ":" + str(engine_object.get_current_min()) +
+                                ":" + str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
 
                 elif command == "said" and re.search('Guess a number', payload):
-                    print ("OK: WHAT IS engine_object.get_current_min(): " + str(engine_object.get_current_min()))
-                    print ("OK: WHAT IS engine_object.get_current_max(): " + str(engine_object.get_current_max()))
-                    number_to_guess = engine_object.guess_a_number(prior_guess_was, engine_object.get_current_min(), engine_object.get_current_max())
+                    #print ("OK: WHAT IS engine_object.get_current_min(): " + str(engine_object.get_current_min()))
+                    #print ("OK: WHAT IS engine_object.get_current_max(): " + str(engine_object.get_current_max()))
+                    match_object = re.search('(.*?)(:)(.*?)(:)(.*)', payload)
+
+                    if match_object:
+                        cur_min_from_p1 = int(match_object.group(3))
+                        cur_max_from_p1 = int(match_object.group(5))
+
+                        engine_object.set_current_min(cur_min_from_p1)
+                        engine_object.set_current_max(cur_max_from_p1)
+
+                    number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
 
                     print ("player 2 is guesing: " + str(number_to_guess))
 
@@ -173,26 +183,28 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.behavior.say_text(str(number_to_guess))
 
                     conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "said" + ":"
-                                + str(number_to_guess), destination="/queue/" + player_one_serial)
+                                + "guess:" + str(number_to_guess), destination="/queue/" + player_one_serial)
 
-                # This is where I'm current at...
-                elif command == "said" and payload == str(number_to_guess):
-                    if number_to_guess < engine_object.get_current_min() or number_to_guess > engine_object.get_current_max():
+                # This is where I'm current at
+                elif command == "said" and re.search('(.*?)(:)(.*)', payload):
+                    match_object = re.search('(.*?)(:)(.*)', payload)
+                    if match_object:
+                        number_guessed = int(match_object.group(3))
+
+                    if number_guessed < engine_object.get_current_min() or number_guessed > engine_object.get_current_max():
                         text_to_say = "Number out of range!"
 
-                    elif number_to_guess < magic_number:
+                    elif number_guessed < magic_number:
                         text_to_say = "Number too low!"
-                        prior_guess_was = "too_low"
-                        engine_object.set_current_min(number_to_guess)
+                        engine_object.set_current_min(number_guessed)
                         engine_object.increase_user_guess_count(1)
 
-                    elif number_to_guess > magic_number:
+                    elif number_guessed > magic_number:
                         text_to_say = "Number too high!"
-                        prior_guess_was = "too_high"
-                        engine_object.set_current_max(number_to_guess)
+                        engine_object.set_current_max(number_guessed)
                         engine_object.increase_user_guess_count(1)
 
-                    elif number_to_guess == magic_number:
+                    elif number_guessed == magic_number:
                         engine_object.increase_user_guess_count(1)
 
                         if engine_object.get_user_guess_count() == 1:
@@ -205,14 +217,14 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     elif robot1_model == "vector":
                         robot1.behavior.say_text(text_to_say)
 
-                    if number_to_guess == magic_number:
+                    if number_guessed == magic_number:
                         conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_one_serial)
                         conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_two_serial)
 
                     else:
-                        conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
+                        conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
-                            str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
+                            str(engine_object.get_current_max()), destination="/queue/" + player_one_serial)
 
                 elif command == "ENDAPP":
                     game_complete = True
@@ -336,8 +348,9 @@ except ModuleNotFoundError:
 if cozmo_supported:
     try:
         cozmo.run_program(cozmo_program)
-    except:
+    except Exception as e:
         print ("Trouble running cozmo code: ")
+        print (traceback.format_exc())
 
 if vector_supported:
     try:
