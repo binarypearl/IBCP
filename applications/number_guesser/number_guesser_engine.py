@@ -18,7 +18,7 @@ class number_guesser_engine:
         self.set_magic_number()
 
     def set_magic_number(self):
-        self.__magic_number = random.randint(1,101)
+        self.__magic_number = random.randint(1,100)
 
     def get_magic_number(self):
         return (self.__magic_number)
