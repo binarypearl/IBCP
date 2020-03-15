@@ -28,7 +28,7 @@ Cozmo to Vector interaction
 
 multiplayer action of both Cozmo and Vector over both LAN and WAN.
 
-**Installation, Configuration and Usage:**
+**Installation, Configuration and Usage:**  
 At a high level 3 things are needed:
 
 **Installation:**
@@ -41,7 +41,7 @@ At a high level 3 things are needed:
 
 3.  Python 3 modules:
     One module for sure that you need is stomp.py:
-    pip3 install install stomp.py
+    > pip3 install install stomp.py
 
     Your pip3 command may be slightly different than the command above.  The package is actually called stomp.py (with the .py extension)
     I had another version of stomp I think from system repository that worked in Linux but didn't with Mac and Windows.  Get the version
@@ -51,7 +51,7 @@ At a high level 3 things are needed:
 
 **Configuration:**
 Apache MQ should just need to be started.  If in Linux, go to your Apache MQ downloaded directory and run:
-./bin/activemq start
+> ./bin/activemq start
 
 Windows is probably similar, but not sure off the top of my head.  All you need is 1 instance of Apache MQ running for your network.
 
