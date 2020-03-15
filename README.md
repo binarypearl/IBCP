@@ -6,6 +6,8 @@ A message queue is like a printer queue, but it uses text messages instead of pr
 
 The problem I am solving here is:  The DDL/Anki robots more or less don't communicate with each other.  
 There is a small amount of pre-programmed human interaction (examples:  Quick Tap with Cozmo and BlackJack with Vector).
+My goal is to get Cozmo, Vector and humans to be able to communicate and play games together.  This release focuses on
+robot to robot communication. Human interaction is queued for a future IBCP release.
 
 Behind the scenes, Cozmo and Vector are very different.  However both robots can 'say' phrases.  Both robots can 'move'.  
 Both robots can do 'animations.'.  But the implementation details are different for each robot.
@@ -16,10 +18,10 @@ General message format is:
 >  to_robot:from_robot:command:payload  
 
 Example:  
-"robot2:robot1:say:Hello robot 1!"  
+"robot2:robot1:say:Hello robot 2!"  
 
 In this case, robot1 will send a MQ message to robot2, and robot2 can respond with:  
-"robot1:robot2:say:Hello robot 2!"  
+"robot1:robot2:say:Hello robot 1!"  
 
 The end result:  We have a way to have:  
 Cozmo to Cozmo interaction   
@@ -35,7 +37,7 @@ At a high level 3 things are needed:
 
 **Installation:**
 1.  Apache MQ 5:  
-    https://activemq.apache.org/components/classic/download/
+    https://activemq.apache.org/components/classic/download/  
     Make sure you DON'T get Apache MQ Artemis.  That doesn't work with IBCP.
 
 2.  IBCP itself:  
@@ -49,7 +51,9 @@ At a high level 3 things are needed:
     I had another version of stomp I think from system repository that worked in Linux but didn't with Mac and Windows.  Get the version
     from pip3 instead.
 
-    Other modules will be listed later, eventually with a pre-check script that will tell you what is missing.
+    Other modules will be listed later, eventually with a pre-check script that will tell you what is missing.  
+    Otherwise when you try running an application, get any modules it complains are missing.  
+    Not ideal, but will eventually have something better for this.  
 
 **Configuration:**  
 Apache MQ should just need to be started.  If in Linux, go to your Apache MQ downloaded directory and run:  
@@ -90,7 +94,7 @@ If running on different computers:
 
 They can be started in any order.  
 
-The only currently unsupported configuration is two Cozmo's on the same computer.  But have 2 Cozmo's play the game on different
+The only currently unsupported configuration is two Cozmo's on the same computer.  But having 2 Cozmo's play the game on different
 computers should be supported.
 
 --binarypearl
