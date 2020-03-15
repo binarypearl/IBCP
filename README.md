@@ -49,18 +49,18 @@ At a high level 3 things are needed:
 
     Other modules will be listed later, eventually with a pre-check script that will tell you what is missing.
 
-**Configuration:**
-Apache MQ should just need to be started.  If in Linux, go to your Apache MQ downloaded directory and run:
-> ./bin/activemq start
+**Configuration:**  
+Apache MQ should just need to be started.  If in Linux, go to your Apache MQ downloaded directory and run:  
+> ./bin/activemq start  
 
 Windows is probably similar, but not sure off the top of my head.  All you need is 1 instance of Apache MQ running for your network.
 
-Modify IBCP/ibcp.cfg:
+Modify IBCP/ibcp.cfg:  
 The only thing we need to change is the mq_server.  Change the IP address here to the the IP address of the computer running Active MQ.
 Leave the port alone as 61613 unless you really know what you are doing and changed it for some reason in Apache MQ.  
 Leave the paths to the install directory commented out, they are not needed at the moment.
 
-**Usage:**
+**Usage:**  
 The only fully functioning application is number_guesser.  The other application conversation and conversation_multi work to some
 degree, but they were early prototypes.
 
@@ -78,13 +78,13 @@ The format is robot_model:serial_number
 robot_model is either 'cozmo' or 'vector'.  The ':' is the separator and the NNNNNNNN is the serial number of the robot in question.
 
 If running on different computers:
-> On Computer 1:
-> cd IBCP/applications/number_guesser
-> ./number_guesser -c /path/to/ibcp.cfg --p1 vector:NNNNNNNN
+> On Computer 1:  
+> cd IBCP/applications/number_guesser  
+> ./number_guesser -c /path/to/ibcp.cfg --p1 vector:NNNNNNNN  
 
-> On Computer 2:
-> cd IBCP/applications/number_guesser
-> ./number_guesser -c /path/to/ibcp.cfg --p2 cozmo:NNNNNNNN
+> On Computer 2:  
+> cd IBCP/applications/number_guesser  
+> ./number_guesser -c /path/to/ibcp.cfg --p2 cozmo:NNNNNNNN  
 
 They can be started in any order.  
 
