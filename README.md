@@ -36,12 +36,12 @@ At a high level 3 things are needed:
     https://activemq.apache.org/components/classic/download/
     Make sure you DON'T get Apache MQ Artemis.  That doesn't work with IBCP.
 
-2.  IBCP itself:
+2.  IBCP itself:  
     git clone https://github.com/binarypearl/IBCP.git
 
-3.  Python 3 modules:
-    One module for sure that you need is stomp.py:
-    > pip3 install install stomp.py
+3.  Python 3 modules:  
+    One module for sure that you need is stomp.py:  
+    > pip3 install install stomp.py  
 
     Your pip3 command may be slightly different than the command above.  The package is actually called stomp.py (with the .py extension)
     I had another version of stomp I think from system repository that worked in Linux but didn't with Mac and Windows.  Get the version
@@ -69,8 +69,8 @@ Only 1 computer needs Apache MQ running.
 
 If running both robots on the same computer:
 
-> cd IBCP/applications/number_guesser
-> ./number_guesser -c /path/to/ibcp.cfg --p1 vector:NNNNNNNN --p2 cozmo:NNNNNNNN
+> cd IBCP/applications/number_guesser  
+> ./number_guesser.py -c /path/to/ibcp.cfg --p1 vector:NNNNNNNN --p2 cozmo:NNNNNNNN  
 
 Notes:  The --p1 and --p2 flags MUST have the double dash.  A single dash will not work.
 The format is robot_model:serial_number
