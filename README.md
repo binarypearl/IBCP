@@ -7,17 +7,19 @@ A message queue is like a printer queue, but it uses text messages instead of pr
 The problem I am solving here is:  The DDL/Anki robots more or less don't communicate with each other.  
 There is a small amount of pre-programmed human interaction (examples:  Quick Tap with Cozmo and BlackJack with Vector).
 
-Behind the scenes, Cozmo and Vector are very different.  However both robots can 'say' words.  Both robots can 'move'.  
+Behind the scenes, Cozmo and Vector are very different.  However both robots can 'say' phrases.  Both robots can 'move'.  
 Both robots can do 'animations.'.  But the implementation details are different for each robot.
 
 The way it works is that each robot has a queue.  If the robot receives a message, it acts on that message appropriately.
 
-General message format is:  to_robot:from_robot:command:payload
+General message format is:  
+>  to_robot:from_robot:command:payload  
 
 Example:  
-"robot2:robot1:say:Hello robot 1!"
+"robot2:robot1:say:Hello robot 1!"  
 
-In this case, robot1 will send a MQ message to robot2.  
+In this case, robot1 will send a MQ message to robot2, and robot2 can respond with:  
+"robot1:robot2:say:Hello robot 2!"  
 
 The end result:  We have a way to have:  
 Cozmo to Cozmo interaction   
