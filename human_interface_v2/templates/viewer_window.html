@@ -1,0 +1,24 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>IBCP Human Interface Viewer</title>
+  <meta name="description" content="IBCP Human Interface Viewer">
+  <meta name="author" content="binarypearl">
+
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+</head>
+
+{% block body %}
+<body style="background-color:Gainsboro;">
+  {% for line in result %}
+    {{ line }}
+  {% endfor %}
+
+  <script src="/static/js/scripts.js"></script>
+</body>
+{% endblock %}
+</html>
