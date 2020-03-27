@@ -372,6 +372,7 @@ player_one_serial = ""
 player_two_serial = ""
 mq_server = ""
 mq_port = ""
+config_file = ""
 
 # This is for getting command line arguments.
 
@@ -410,7 +411,10 @@ try:
     config_file_object = open(config_file, "r")
 
 except:
-    print ("Couldn't open config file")
+    print ("Couldn't open config file: ***" + config_file + "***")
+
+    print ("also what is: ***" + player_one_model_and_serial + "***" + " and ***" + player_two_model_and_serial + "***")
+
     exit(1)
 
 # parse out model and serial number:
