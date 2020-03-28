@@ -54,8 +54,21 @@ class MyListener(stomp.ConnectionListener):
 def handler(signal_received, frame):
     print ('ctrl-c caught, cleaning up.')
 
-    #conn.disconnect()
     exit(0)
+
+def gui_output(two_bots_same_computer, message, player_one_serial, player_two_serial):
+    if two_bots_same_computer:
+        stomp_conn.send(body=player_one_serial + ":" + player_one_serial + ":" + "output" + ":" +
+            message, destination="/queue/" + 'ng_output_' + player_one_serial)
+
+    else:
+        if player_one_serial:
+            stomp_conn.send(body=player_one_serial + ":" + player_one_serial + ":" + "output" + ":" +
+                message, destination="/queue/" + 'ng_output_' + player_one_serial)
+
+        if player_two_serial:
+            stomp_conn.send(body=player_two_serial + ":" + player_two_serial + ":" + "output" + ":" +
+                message, destination="/queue/" + 'ng_output_' + player_two_serial)
 
 # This is the actual application code.  If we get to here, we have 1 or 2 robot objects defined.
 # If you are interested in writing your own game with IBCP, and don't want to mess with the details
@@ -66,20 +79,7 @@ def handler(signal_received, frame):
 # either cozmo or vector, depending on what was passed in at the command line.  The serial numbers
 # are well, the robots serial number.  Vector's is written on the bottom of the physical robot.
 # Cozmo serial number can be found in the Cozmo app when connected to said robot.
-def the_application(robot1, robot1_model, robot2, robot2_model, player_one_serial, player_two_serial, mq_server, mq_port):
-    try:
-        # IP and port of MQ server.  Defined in ibcp.cfg.
-        conn = stomp.Connection([(mq_server, mq_port)])
-        conn.set_listener('', MyListener())
-
-        # This is weird, when apps try to create their own username/password mechanims and it's just
-        # like, what were they thinking?  I think I just created admin/admin in here and it works.
-        # Really secure, but...at least it works.
-        conn.connect('admin', 'admin', wait=True)
-
-    except Exception as e:
-        print ("error: " + str(e))
-
+def the_application(robot1, robot1_model, robot2, robot2_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn):
     # This is our number guesser engine object:
     engine_object = number_guesser_engine()
 
@@ -88,6 +88,13 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     initial_send = False                            # Player 1 starts, but after that set to true and go through game loop.
     player_one_serial_saved = player_one_serial     # Make sure Player 1 starts...might be a better way to handle this.
     number_to_guess = 0                             # Store players 2 guess
+
+    gui_output(two_bots_same_computer, "WELCOME TO NUMBER GUESSER USING IBCP VERSION 0.2!\n", player_one_serial, player_two_serial)
+
+    gui_output(two_bots_same_computer, "Might be waking up robots, please wait...", player_one_serial, player_two_serial)
+
+    gui_output(two_bots_same_computer, "player_one_serial is: " + player_one_serial, player_one_serial, player_two_serial)
+    gui_output(two_bots_same_computer, "player_two_serial is: " + player_two_serial, player_one_serial, player_two_serial)
 
     print ("player_one_serial is: " + player_one_serial)
     print ("player_two_serial is: " + player_two_serial)
@@ -114,19 +121,28 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     # individual queues so a robot only retrives messages intended for itself.
 
     if player_one_serial:
-        conn.subscribe(destination='/queue/' + player_one_serial, id=1, ack='auto')
+        stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=1, ack='auto')
 
+        gui_output(two_bots_same_computer, "player_one_serial just subscribed to /queue/" + player_one_serial, player_one_serial, player_two_serial)
         print ("player_one_serial just subscribed to /queue/" + player_one_serial)
 
-        conn.send(body='anyone' + ":" + player_one_serial + ':' + "play_request" + ":" +
+        stomp_conn.send(body='anyone' + ":" + player_one_serial + ':' + "play_request" + ":" +
                     "number_guesser", destination="/queue/" + "number_guesser")
+
+        gui_output(two_bots_same_computer, player_one_serial + " just send a message to: " + "anyone" +
+                " with comand=play_request and payload=number_guesser to /queue/" + "number_guesser",
+                player_one_serial, player_two_serial)
 
         print (player_one_serial + " just send a message to: " + "anyone" +
                 " with comand=play_request and payload=number_guesser to /queue/" + "number_guesser")
 
     if player_two_serial:
-        conn.subscribe(destination='/queue/' + player_two_serial, id=2, ack='auto')
-        conn.subscribe(destination='/queue/' + 'number_guesser', id=3, ack='auto')
+        stomp_conn.subscribe(destination='/queue/' + player_two_serial, id=2, ack='auto')
+        stomp_conn.subscribe(destination='/queue/' + 'number_guesser', id=3, ack='auto')
+
+        gui_output(two_bots_same_computer, "player_two_serial: " + player_two_serial + " just subscribed to /queue/" + player_two_serial +
+                " and " + "/queue/" + "number_guesser",
+                player_one_serial, player_two_serial)
 
         print ("player_two_serial: " + player_two_serial + " just subscribed to /queue/" + player_two_serial +
                 " and " + "/queue/" + "number_guesser")
@@ -189,10 +205,16 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                 if command == "play_request" and player_one_serial:
                     play_yes = True
+
+                    gui_output(two_bots_same_computer, "player 1 agrees to play", player_one_serial, player_two_serial)
+
                     print ("command does = play_request and player_one_serial has something.")
 
                 elif command == "play_request" and player_two_serial:
                     play_yes = True
+
+                    gui_output(two_bots_same_computer, "player 2 agrees to play", player_one_serial, player_two_serial)
+
                     print ("command does = play_request and player_two_serial has something.")
 
                     conn.send(body=player_two_serial + ":" + from_robot + ':' + "play_request" + ":" +
@@ -228,9 +250,13 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     # We only want player one to get things started:
                     if player_one_serial_saved == player_one_serial:
                         # Send a MQ message to the player1 robot to "say" "Guess a number..."
-                        conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
+                        stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()), destination="/queue/" + player_one_serial)
+
+                        gui_output(two_bots_same_computer, "<Player 1> Guess a number between " + str(engine_object.get_current_min()) + " and " +
+                            str(engine_object.get_current_max()), player_one_serial, player_two_serial)
+
                         initial_send = True
                     else:
                         initial_send = True
@@ -252,7 +278,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot1.behavior.say_text(payload, duration_scalar=0.8)
                         robot1.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
 
-                    conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
+                    stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
                                 + payload  + ":" + str(engine_object.get_current_min()) +
                                 ":" + str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
 
@@ -275,6 +301,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     # Call the algorithm to guess a number:
                     number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
 
+                    gui_output(two_bots_same_computer, "<Player 2> is guessing: " + str(number_to_guess), player_one_serial, player_two_serial)
                     print ("player 2 is guesing: " + str(number_to_guess))
 
                     if robot2_model == "cozmo":
@@ -288,7 +315,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
 
                     # Send a message to player1 with player2's guess.
-                    conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "said" + ":"
+                    stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "said" + ":"
                                 + "guess:" + str(number_to_guess), destination="/queue/" + player_one_serial)
 
                 # player1 compares the guess to see if was out of range, too low, too high, or just right
@@ -319,21 +346,29 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                             text_to_say = "You guessed it!  The magic number was " + str(magic_number) + " and it took you " + str(engine_object.get_user_guess_count()) + " guesses!"
 
                     if robot1_model == "cozmo":
+                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say)
                         robot1.say_text(text_to_say, duration_scalar=0.6).wait_for_completed()
 
                     elif robot1_model == "vector":
+                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say, player_one_serial, player_two_serial)
                         robot1.behavior.say_text(text_to_say, duration_scalar=0.8)
 
                     # Since the number was guessed, we send a ENDAPP IBCP command to say we are done and exit the program.
                     if number_guessed == magic_number:
-                        conn.send(body=player_one_serial + ":" + player_one_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_one_serial)
-                        conn.send(body=player_two_serial + ":" + player_two_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_two_serial)
+                        stomp_conn.send(body=player_one_serial + ":" + player_one_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_one_serial)
+                        stomp_conn.send(body=player_two_serial + ":" + player_two_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_two_serial)
+
+                        gui_output(two_bots_same_computer, "ENDAPP received, game is done.", player_one_serial, player_two_serial)
 
                     # Guess again!  Also passing in the current_min and current_max values for player 2 to process
                     else:
-                        conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
+                        stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()), destination="/queue/" + player_one_serial)
+
+                        gui_output(two_bots_same_computer, "<Player 1> " + "Guess a number between " + str(engine_object.get_current_min()) + " and " +
+                            str(engine_object.get_current_max()),
+                            player_one_serial, player_two_serial)
 
                 # If we get an ENDAPP message, set our boolean to true to our game loop exits
                 elif command == "ENDAPP":
@@ -373,6 +408,7 @@ player_two_serial = ""
 mq_server = ""
 mq_port = ""
 config_file = ""
+two_bots_same_computer = False
 
 # This is for getting command line arguments.
 
@@ -416,6 +452,9 @@ except:
     print ("also what is: ***" + player_one_model_and_serial + "***" + " and ***" + player_two_model_and_serial + "***")
 
     exit(1)
+
+if player_one_model_and_serial and player_two_model_and_serial:
+    two_bots_same_computer = True
 
 # parse out model and serial number:
 # mo stands for 'model object'
@@ -485,6 +524,26 @@ for record in config_file_lines:
 
 #print ("what is final_path: " + final_path)
 
+# Create connection to MQ server.
+try:
+    # IP and port of MQ server.  Defined in ibcp.cfg.
+    stomp_conn = stomp.Connection([(mq_server, mq_port)])
+    stomp_conn.set_listener('', MyListener())
+
+    # This is weird, when apps try to create their own username/password mechanims and it's just
+    # like, what were they thinking?  I think I just created admin/admin in here and it works.
+    # Really secure, but...at least it works.
+    stomp_conn.connect('admin', 'admin', wait=True)
+
+except Exception as e:
+    print ("error: " + str(e))
+
+#if player_one_serial:
+#    stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
+
+#if player_two_serial:
+#    stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
+
 # Now we see if cozmo sdk is installed.  If so we define the function cozmo_program()
 # which will actually call the application.
 # Note that 2 player cozmo on the same computer is not supported.  2 player cozmo on differnt computers
@@ -493,25 +552,30 @@ try:
     import cozmo
     from cozmo.util import degrees, distance_mm, speed_mmps
     cozmo_supported = True
+
+    gui_output(two_bots_same_computer, "cozmo sdk found", player_one_serial, player_two_serial)
+
     print ("cozmo sdk found")
 
     def cozmo_program(robot: cozmo.robot.Robot):
-        print ("p1m: " + player_one_model)
-        print ("p2m: " + player_two_model)
-        print ("p1: " + player_one_serial)
-        print ("p2: " + player_two_serial)
+        #print ("p1m: " + player_one_model)
+        #print ("p2m: " + player_two_model)
+        #print ("p1: " + player_one_serial)
+        #print ("p2: " + player_two_serial)
 
         # two cozmo's not yet supported...have to figure out what that looks like
         #if player_one_model == "vector" and player_two_model == "vector":
         #    the_application(robot1, player_one_model, robot2, player_two_model, player_one_serial, player_two_serial)
 
         if player_one_model == "cozmo" and player_two_model != "cozmo":
-            the_application(robot, player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port)
+            the_application(robot, player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
         elif player_one_model != "cozmo" and player_two_model == "cozmo":
-            the_application("", "", robot, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port)
+            the_application("", "", robot, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
 except ModuleNotFoundError:
+    gui_output(two_bots_same_computer, "cozmo sdk not found, cozmo robots are not supported on this computer.", player_one_serial, player_two_serial)
+
     print ("cozmo sdk not found, cozmo robots are not supported on this computer.")
 
 # Now we see if Vector is supported.
@@ -519,9 +583,14 @@ try:
     import anki_vector
     from anki_vector.util import degrees, distance_mm, speed_mmps
     vector_supported = True
+
+    gui_output(two_bots_same_computer, "vector sdk found", player_one_serial, player_two_serial)
+
     print ("vector sdk found")
 
 except ModuleNotFoundError:
+    gui_output(two_bots_same_computer, "vector sdk not found, vector robots are not supported on this computer.", player_one_serial, player_two_serial)
+
     print ("vector sdk not found, vector robots are not supported on this computer.")
 
 # Call Cozmo program if one of robots is Cozmo.  Otherwise don't call it.
@@ -529,6 +598,8 @@ if cozmo_supported and (player_one_model == "cozmo" or player_two_model == "cozm
     try:
         cozmo.run_program(cozmo_program)
     except Exception as e:
+        gui_output(two_bots_same_computer, "Trouble running cozmo code:\n" + traceback.format_exc(), player_one_serial, player_two_serial)
+
         print ("Trouble running cozmo code: ")
         print (traceback.format_exc())
 
@@ -537,27 +608,29 @@ if cozmo_supported and (player_one_model == "cozmo" or player_two_model == "cozm
 if vector_supported:
     try:
         def vector_code():
-            print ("p1m: " + player_one_model)
-            print ("p2m: " + player_two_model)
-            print ("p1: " + player_one_serial)
-            print ("p2: " + player_two_serial)
+            #print ("p1m: " + player_one_model)
+            #print ("p2m: " + player_two_model)
+            #print ("p1: " + player_one_serial)
+            #print ("p2: " + player_two_serial)
 
             if player_one_model == "vector" and player_two_model == "vector":
                 with anki_vector.Robot(player_one_serial) as robot1:
                     with anki_vector.Robot(player_two_serial) as robot2:
-                        the_application(robot1, player_one_model, robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port)
+                        the_application(robot1, player_one_model, robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
             elif player_one_model == "vector" and player_two_model != "vector":
                 with anki_vector.Robot(player_one_serial) as robot1:
-                    the_application(robot1, player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port)
+                    the_application(robot1, player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
             elif player_one_model != "vector" and player_two_model == "vector":
                 with anki_vector.Robot(player_two_serial) as robot2:
-                    the_application("", "", robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port)
+                    the_application("", "", robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
     except:
+        gui_output(two_bots_same_computer, "Trouble running vector code", player_one_serial, player_two_serial)
         print ("Trouble running vector code")
 else:
+    gui_output(two_bots_same_computer, "No supported robots found!", player_one_serial, player_two_serial)
     print ("No supported robots found!")
 
 if __name__ == '__main__':
