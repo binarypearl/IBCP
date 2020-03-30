@@ -28,7 +28,7 @@ def create_initial_tables(db_connection):
     db_cursor.execute('create table ibcp_robots (serial_number TEXT PRIMARY KEY)')
 
     db_connection.commit()
-    db_connection.close()
+    #db_connection.close()
 
 # Begin main code:
 message_queue = []
@@ -78,13 +78,7 @@ menu_def = [['&File', ['E&xit']],
             ['&Edit', ['Preferences'] ],
             ['&Help', '&About...'], ]
 
-layout_preferences = [
-    [sg.Text('MQ Server:', size=(9, 1)), sg.InputText(default_text='', key='-MQSERVER-', size=(16, 1))],
-    [sg.Text('MQ port:', size=(10, 1)), sg.InputText(default_text='61613', key='-MQPORT-', size=(7, 1))],
-    [sg.Button('Set'), sg.Button('Close')]
-]
-
-layout =    [
+layout_main =    [
             [sg.Menu(menu_def, tearoff=True)],
             [sg.Text('Welcome to IBCP huamn interface!', size=(50, 1))],
             [sg.Multiline(default_text='', size=(199, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')],
@@ -95,6 +89,8 @@ layout =    [
             ],
             [
                 sg.Text('Enter some input', size=(66, 1)),
+                sg.Text('MQ server info: ', size=(16, 1), key='-MQSERVERINFOLABEL-'),
+                sg.Text('', size=(20, 1), key='-MQSERVERINFODATA-')
             ],
             [
                 sg.Text('Guess a number', size=(15, 1)), sg.InputText('', key='-INPUT-', size=(10, 1)),
@@ -103,22 +99,60 @@ layout =    [
             [sg.Submit(), sg.Cancel()]
             ]
 
-window = sg.Window('IBCP version 0.2', layout, resizable=True)
+print ("STEP 0")
+window = sg.Window('IBCP version 0.2', layout_main, resizable=True)
+window.Finalize()
+print ("STEP 1")
 
-event, values = window.read()
+# Lets try to populate mq server data here:
+db_cursor.execute("select * from ibcp_config where config_item='mq_config'")
+
+rows = db_cursor.fetchall()
+
+for row in rows:
+    #print ("row is: " + str(row))
+
+    mq_server = row[1]
+    mq_port = row[2]
+
+mq_server_port = mq_server + ":" + mq_port
+
+print ("What is mq_server_port: " + mq_server_port)
+
+window['-MQSERVERINFODATA-'].update(mq_server_port)
+
+#event, values = window.read()
+
+print ("STEP 2")
 
 output_list = []
 
 command_ran = False
 
 while True:
+    event, values = window.read()
+    print ("Are we in True loop?")
+
     if event == "Preferences":
+
+        # We need layout_preferences here, because PySimpleGUI complains up a storm
+        # if you don't.  It want's a clean layout upon creation of window.  So we define it
+        # here before the create so it always gets it's clean slate.  I populate the fields
+        # from the database before the user see's it, so that works for me.
+        layout_preferences = [
+            [sg.Text('MQ Server:', size=(9, 1)), sg.InputText(default_text='', key='-MQSERVER-', size=(16, 1))],
+            [sg.Text('MQ port:', size=(10, 1)), sg.InputText(default_text='61613', key='-MQPORT-', size=(7, 1))],
+            [sg.Button('Set'), sg.Button('Close')]
+        ]
+
         preferences_window = sg.Window('Preferences', layout_preferences, resizable=True, location=[800,400])
 
         preferences_window.Finalize()
 
         # I think here we do a select to get the current mq_server and mq_port values and populate
         # the fields with the data.
+        #db_connection = sqlite3.connect(current_directory + "/ibcp.db")
+        #db_cursor = db_connection.cursor()
         db_cursor.execute("select * from ibcp_config where config_item='mq_config'")
 
         rows = db_cursor.fetchall()
@@ -132,7 +166,7 @@ while True:
         event_preferences, event_values = preferences_window.read()
 
         while True:
-            print ("What is event_preferences before read: " + event_preferences)
+            print ("What is event_preferences before read: " + str(event_preferences))
             print ("What is event_values before read: " + str(event_values))
 
             if event_preferences == 'Set':
@@ -160,7 +194,6 @@ while True:
 
 
                 db_connection.commit()
-                db_connection.close()
 
             if event_preferences is None or event_preferences == 'Exit' or event_preferences == 'Cancel' or event_preferences == 'Close':
                 preferences_window.close()
@@ -168,13 +201,30 @@ while True:
 
             event_preferences, event_values = preferences_window.read(timeout=1000)
 
-    print ("What is event before read: " + event)
+
+
+    print ("What is event before read: " + str(event))
     print ("What is values before read: " + str(values))
+
+    # Lets try to populate mq server data here:
+    db_cursor.execute("select * from ibcp_config where config_item='mq_config'")
+
+    rows = db_cursor.fetchall()
+
+    for row in rows:
+        #print ("row is: " + str(row))
+
+        mq_server = row[1]
+        mq_port = row[2]
+
+    mq_server_port = mq_server + ":" + mq_port
+
+    print ("What is mq_server_port: " + mq_server_port)
+
+    window['-MQSERVERINFODATA-'].update(mq_server_port)
 
     if event is None or event == 'Exit' or event == 'Cancel':
         break
-
-    event, values = window.read(timeout=1000)
 
     if not command_ran:
         print ("number guesser being called here...")
@@ -214,5 +264,7 @@ while True:
         message_queue.remove(message)
 
     time.sleep(0.1)
+
+    event, values = window.read(timeout=1000)
 
 window.close()
