@@ -41,13 +41,14 @@ player_two_serial = ""
 mq_server = ""
 mq_port = ""
 mq_connected = False
+list_of_applications = []
 
-print ("Debug1: " + os.path.dirname(os.path.realpath(__file__)))
-print ("Debug2: " + sys.path[0])
+#print ("Debug1: " + os.path.dirname(os.path.realpath(sys.argv[0])))
+#print ("Debug2: " + sys.path[0])
+
+current_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
 
 # DB:
-current_directory = os.getcwd()
-
 db_connection = sqlite3.connect(current_directory + "/ibcp.db")
 db_cursor = db_connection.cursor()
 
@@ -71,16 +72,20 @@ layout_main =    [
                 sg.Text('Welcome to IBCP huamn interface!', size=(70, 1)),
                 sg.Text('MQ server info: ', size=(16, 1), key='-MQSERVERINFOLABEL-'),
                 sg.Text('', size=(20, 1), key='-MQSERVERINFODATA-')],
-            [sg.Multiline(default_text='', size=(199, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')],
+            [sg.Multiline(default_text='', size=(215, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')],
             [
                 sg.Multiline(default_text=initial_instructions, size=(64, 10), autoscroll=True, do_not_clear=True, enter_submits=True, key='-INSTRUCTIONS-'),
-                sg.Listbox(default_values='', values='', size=(64, 10), key='-ROBOTS-'),
-                sg.Listbox(default_values='', values='', size=(30, 10), key='-APPS-'),
-                sg.Listbox(default_values='', values='', size=(30, 10), key='-APPOPTIONS')
+                sg.Listbox(default_values='', values='', size=(64, 10), key='-ROBOTS-', enable_events=True),
+                sg.Listbox(default_values='', values='', size=(20, 10), key='-APPS-', enable_events=True),
+                sg.Text('Player 1', size=(8, 1), key='-P1LABEL-'),
+                sg.Combo('', key='-P1CHOICE-', size=(15, 1), enable_events=True),
+                sg.Text('Player 2', size=(8, 1), key='-P2LABEL-'),
+                sg.Combo('', key='-P2CHOICE-', size=(15, 1), enable_events=True),
+                sg.Button('Play')
             ],
             [
-                sg.Text('Enter some input', size=(66, 1)),
-                sg.Text('Model:', size=(5,1)),
+                sg.Text('Input when game is active:', size=(66, 1), key='-HUMANINPUTTEXT-'),
+                sg.Text('Model:', size=(7,1)),
                 sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(6, 1)),
                 sg.Text('Serial number:', size=(12, 1)),
                 sg.InputText('', key='-SERIALNUMBER-', size=(9, 1)),
@@ -88,8 +93,7 @@ layout_main =    [
                 sg.Button('Unregister')
             ],
             [
-                sg.Text('Guess a number', size=(15, 1)), sg.InputText('', key='-INPUT-', size=(10, 1)),
-
+                sg.InputText('', key='-HUMANINPUTFIELD-', size=(10, 1))
             ],
             [sg.Submit(), sg.Cancel()]
             ]
@@ -122,8 +126,20 @@ rows = db_cursor.fetchall()
 
 window['-ROBOTS-'].update(rows)
 
+# Get list of available applications:
+dir_object_list = os.scandir(current_directory + "/applications")
+
+for dir_object in dir_object_list:
+    if dir_object.is_dir():
+        list_of_applications.append(dir_object.name)
+
+window['-APPS-'].update(list_of_applications)
+
+event_main, values_main = window.read()
+
 while True:
-    event_main, values_main = window.read()
+    #event_main, values_main = window.read()
+    #window.Finalize()
     print ("Are we in True loop?")
 
     if mq_server != '':
@@ -143,6 +159,21 @@ while True:
             #print ("error: " + str(e))
             print ("Will try connecting to mq server in 1 second...")
             time.sleep(1)
+
+    if event_main == "-APPS-":
+        temp_list = []
+
+        db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
+        rows = db_cursor.fetchall()
+
+        for row in rows:
+            temp_list.append(row[0])
+
+        window['-P1CHOICE-'].update(values=temp_list)
+        window['-P2CHOICE-'].update(values=temp_list)
+
+        #window['-P1CHOICE-'].update(window['-ROBOTS-'].GetListValues())
+        #window['-P2CHOICE-'].update(window['-ROBOTS-'])
 
     # Look for robots to register:
     if event_main == "Register":
@@ -191,11 +222,73 @@ while True:
             window['-ROBOTS-'].update(rows)
             window['-SERIALNUMBER-'].update('')
 
-    if player_one_serial:
-        stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
 
-    if player_two_serial:
-        stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
+
+    if event_main == "Play":
+        print ("Did we get to Play?")
+
+        print ("so what is: " + str(values_main['-APPS-'][0]))
+
+        if values_main['-APPS-'][0] == "number_guesser":
+            print ("Did we get number_guesser app?")
+
+            db_cursor.execute("select serial_number,model from ibcp_robots where model_and_serial_number='" + values_main['-P1CHOICE-'] + "'")
+            rows = db_cursor.fetchall()
+
+            player_one_serial = rows[0][0]
+            player_one_model = rows[0][1]
+
+            db_cursor.execute("select serial_number,model from ibcp_robots where model_and_serial_number='" + values_main['-P2CHOICE-'] + "'")
+            rows = db_cursor.fetchall()
+
+            player_two_serial = rows[0][0]
+            player_two_model = rows[0][1]
+
+            print ("P1S: " + player_one_serial)
+            print ("P2S: " + player_two_serial)
+
+            print ("P1M: " + player_one_model)
+            print ("P2M: " + player_two_model)
+
+            if player_one_serial:
+                stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
+
+            if player_two_serial:
+                stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
+
+            print ("COMMAND IS: " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
+
+            p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            print ("This is the line after Popen()")
+
+            # Now lets update some parts of the gui:
+            if player_one_model == "human":
+                instructions = "Human is player 1:\nEnter a number for player 2 to guess"
+                window['-INSTRUCTIONS-'].update(instructions)
+
+                window['-HUMANINPUTTEXT-'].update("Enter a number for player 2 to guess:")
+
+            elif player_two_model == "human":
+                instructions = "Human is player 2:\nTry to guess the magic number"
+                window['-INSTRUCTIONS-'].update(instructions)
+
+    if event_main == "Submit":
+        print ("H3: Did I get to Submit event_main?")
+
+        if values_main['-APPS-'][0] == "number_guesser":
+            print ("H4: Did I get into -APPS- number_guesser?")
+
+            human_input_field = window['-HUMANINPUTFIELD-'].Get()
+
+            print ("H5: What is human_input_field: " + human_input_field)
+
+            if human_input_field != "":
+                print ("H6: If we got here, human_input_field != double quotes")
+                # Eventually do data validation here...
+                if player_one_model == "human":
+                    print ("H7: I am sending message to human queue with magic number")
+                    stomp_conn.send(body='human' + ":" + player_one_serial + ':' + "set_magic_number" + ":" +
+                    human_input_field, destination="/queue/" + "human")
 
     if event_main == "Preferences":
 
@@ -288,6 +381,7 @@ while True:
     window['-MQSERVERINFODATA-'].update(mq_server_port)
 
     if event_main is None or event_main == 'Exit' or event_main == 'Cancel':
+        print ("AM I BREAKING?")
         break
 
     if not command_ran:
@@ -297,6 +391,8 @@ while True:
 
     if command_ran:
         print ("COMMAND HAS BEEN RAN")
+
+    print ("RIGHT BEFORE message_queue processing...")
 
     for message in message_queue:
         # IBCP message format:  to_robot:from_robot:command:payload
@@ -322,7 +418,7 @@ while True:
         command = message.group(5)
         payload = message.group(7)
 
-        window['-OUTPUT-'].update(payload + "\n", append=True)
+        window['-OUTPUT-'].update(payload + "\n\n", append=True)
 
         # Remove the MQ message from the message_queue[] list now that we have processed it.
         message_queue.remove(message)

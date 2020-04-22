@@ -54,6 +54,14 @@ class number_guesser_engine:
         return (self.__current_max)
 
     def guess_a_number(self, cur_min, cur_max):
-        guess = ((int(cur_max) - int(cur_min)) // 2) + int(cur_min)
+        temp = cur_max - cur_min
+        if temp == 1 and cur_max == self.__max:
+            guess = cur_max
+
+        elif temp == 1 and cur_min == self.__min:
+            guess = cur_min
+
+        else:
+            guess = ((int(cur_max) - int(cur_min)) // 2) + int(cur_min)
 
         return (guess)

@@ -43,12 +43,18 @@ class MyListener(stomp.ConnectionListener):
 
     def on_message(self, headers, message):
         print('received a message "%s"' % message)
-        global message_queue
+        global robot_message_queue
+        global human_message_queue
 
         match_object = re.search('(.*?)(:)(.*?)(:)(.*?)(:)(.*)', message)
 
         if match_object:
-            message_queue.append(match_object)
+            if match_object.group(1) == "human":
+                human_message_queue.append(match_object)
+
+            else:
+                robot_message_queue.append(match_object)
+
 
 # Handle ctrl-c, not currently working, will fix later.
 def handler(signal_received, frame):
@@ -103,10 +109,42 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     # a new magic number if we want to play again (although play again not currently supported).
     engine_object.initialize_game()
 
-    if player_one_serial_saved == player_one_serial:
+    print ("WTF 0: what is robot1_model: " + robot1_model)
+
+    if player_one_serial_saved == player_one_serial and robot1_model != 'human':
         magic_number = engine_object.get_magic_number()
 
         print ("The magic number is: " + str(magic_number))
+
+    else:
+        # we need to get input first from human:
+        dont_have_human_magic_number = True
+        stomp_conn.subscribe(destination='/queue/' + 'human', id=7, ack='auto')
+        stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=9, ack='auto')
+
+
+        gui_output(two_bots_same_computer, "player_one_serial just subscribed to /queue/" + player_one_serial, player_one_serial, player_two_serial)
+        print ("player_one_serial just subscribed to /queue/" + player_one_serial)
+
+        gui_output(two_bots_same_computer, "waiting for human to set a magic number...", player_one_serial, player_two_serial)
+
+        while dont_have_human_magic_number:
+            for message in human_message_queue:
+                gui_output(two_bots_same_computer, "I have a message in human queue...", player_one_serial, player_two_serial)
+
+                to_robot = message.group(1)
+                from_robot = message.group(3)
+                command = message.group(5)
+                payload = message.group(7)
+
+                if robot1_model == "human" and command == "set_magic_number":
+                    magic_number = int(payload)
+                    dont_have_human_magic_number = False
+
+                    human_message_queue.remove(message)
+
+            time.sleep(1)
+
 
     # subscribe to our queue if we have a robot object.
     # Each robot has theire own queue with a name like:  /queue/robot_serial_number
@@ -121,10 +159,11 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     # individual queues so a robot only retrives messages intended for itself.
 
     if player_one_serial:
-        stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=1, ack='auto')
+        if player_one_model != "human":
+            stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=1, ack='auto')
 
-        gui_output(two_bots_same_computer, "player_one_serial just subscribed to /queue/" + player_one_serial, player_one_serial, player_two_serial)
-        print ("player_one_serial just subscribed to /queue/" + player_one_serial)
+            gui_output(two_bots_same_computer, "player_one_serial just subscribed to /queue/" + player_one_serial, player_one_serial, player_two_serial)
+            print ("player_one_serial just subscribed to /queue/" + player_one_serial)
 
         stomp_conn.send(body='anyone' + ":" + player_one_serial + ':' + "play_request" + ":" +
                     "number_guesser", destination="/queue/" + "number_guesser")
@@ -155,7 +194,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         print ("what is player_one_serial: " + player_one_serial)
         print ("what is player_two_serial: " + player_two_serial)
         print ("what is play_yes: " + str(play_yes))
-        print ("Now looking at our message_queue: ")
+        print ("Now looking at our robot_message_queue: ")
         print ("\n")
 
         # This is where we look at the messages that came on to our queue.
@@ -163,7 +202,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         # already happened.  We don't have access to a robot object in on_message(),
         # so we add the contents of the message on to the python list message_queue[]
         # and then process them here, where do have a robot object.
-        for message in message_queue:
+        for message in robot_message_queue:
             # IBCP message format:  to_robot:from_robot:command:payload
             # where:
             # to_robot is the serial number of the robot that is the intended receiver of the message
@@ -203,27 +242,41 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                 print ("player_two_serial: " + player_two_serial)
                 print ("Now we test if command == play_request: ")
 
-                if command == "play_request" and player_one_serial:
+                if two_bots_same_computer:
                     play_yes = True
-
                     gui_output(two_bots_same_computer, "player 1 agrees to play", player_one_serial, player_two_serial)
-
-                    print ("command does = play_request and player_one_serial has something.")
-
-                elif command == "play_request" and player_two_serial:
-                    play_yes = True
-
                     gui_output(two_bots_same_computer, "player 2 agrees to play", player_one_serial, player_two_serial)
 
-                    print ("command does = play_request and player_two_serial has something.")
-
-                    conn.send(body=player_two_serial + ":" + from_robot + ':' + "play_request" + ":" +
+                    stomp_conn.send(body=player_two_serial + ":" + from_robot + ':' + "play_request" + ":" +
                                 "number_guesser", destination="/queue/" + from_robot)
 
                     print ("because we are player_two_serial, we just sent a message: " +
                             "from_robot: " + player_two_serial + " to: " + from_robot +
                             " with the command play_request with the payload number_guesser" +
                             " to the destination /queue/" + from_robot)
+
+                else:
+                    if command == "play_request" and player_one_serial:
+                        play_yes = True
+
+                        gui_output(two_bots_same_computer, "player 1 agrees to play", player_one_serial, player_two_serial)
+
+                        print ("command does = play_request and player_one_serial has something.")
+
+                    elif command == "play_request" and player_two_serial:
+                        play_yes = True
+
+                        gui_output(two_bots_same_computer, "player 2 agrees to play", player_one_serial, player_two_serial)
+
+                        print ("command does = play_request and player_two_serial has something.")
+
+                        conn.send(body=player_two_serial + ":" + from_robot + ':' + "play_request" + ":" +
+                                    "number_guesser", destination="/queue/" + from_robot)
+
+                        print ("because we are player_two_serial, we just sent a message: " +
+                                "from_robot: " + player_two_serial + " to: " + from_robot +
+                                " with the command play_request with the payload number_guesser" +
+                                " to the destination /queue/" + from_robot)
 
                 # This handles the situation if player1 and player2 are being ran from 2 different computers.
                 # If we run this script on the same computer with both player1 and player2, we know their
@@ -278,6 +331,14 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot1.behavior.say_text(payload, duration_scalar=0.8)
                         robot1.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
 
+                    elif robot1_model == "human" and robot2_model == "cozmo":
+                        robot2.say_text(player_one_serial + " says " + payload, duration_scalar=0.6).wait_for_completed()
+
+                    elif robot1_model == "human" and robot2_model == "vector":
+                        robot2.behavior.say_text(player_one_serial + " says " + payload, duration_scalar=0.8)
+
+                    # don't think human needs to do anything here
+
                     stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
                                 + payload  + ":" + str(engine_object.get_current_min()) +
                                 ":" + str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
@@ -298,20 +359,24 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         engine_object.set_current_min(cur_min_from_p1)
                         engine_object.set_current_max(cur_max_from_p1)
 
+                    # BREAKPOINT Here...
+
                     # Call the algorithm to guess a number:
                     number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
 
-                    gui_output(two_bots_same_computer, "<Player 2> is guessing: " + str(number_to_guess), player_one_serial, player_two_serial)
+                    gui_output(two_bots_same_computer, "<Player 2> I guess: " + str(number_to_guess), player_one_serial, player_two_serial)
                     print ("player 2 is guesing: " + str(number_to_guess))
+
+                    print ("DEBUG D10: What is robot2_model: " + robot2_model)
 
                     if robot2_model == "cozmo":
                         robot2.drive_straight(distance_mm(20), speed_mmps(200)).wait_for_completed()
-                        robot2.say_text(str(number_to_guess), duration_scalar=0.6).wait_for_completed()
+                        robot2.say_text("I guess " + str(number_to_guess), duration_scalar=0.6).wait_for_completed()
                         robot2.drive_straight(distance_mm(-20), speed_mmps(200)).wait_for_completed()
 
                     elif robot2_model == "vector":
                         robot2.behavior.drive_straight(distance_mm(20), speed_mmps(200))
-                        robot2.behavior.say_text(str(number_to_guess), duration_scalar=0.8)
+                        robot2.behavior.say_text("I guess " + str(number_to_guess), duration_scalar=0.8)
                         robot2.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
 
                     # Send a message to player1 with player2's guess.
@@ -353,6 +418,14 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         gui_output(two_bots_same_computer, "<Player 1> " + text_to_say, player_one_serial, player_two_serial)
                         robot1.behavior.say_text(text_to_say, duration_scalar=0.8)
 
+                    elif robot1_model == "human" and robot2_model == "cozmo":
+                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say, player_one_serial, player_two_serial)
+                        robot2.say_text(player_one_serial + " says " + text_to_say, duration_scalar=0.6).wait_for_completed()
+
+                    elif robot1_model == "human" and robot2_model == "vector":
+                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say, player_one_serial, player_two_serial)
+                        robot2.behavior.say_text(player_one_serial + " says " + text_to_say, duration_scalar=0.8)
+
                     # Since the number was guessed, we send a ENDAPP IBCP command to say we are done and exit the program.
                     if number_guessed == magic_number:
                         stomp_conn.send(body=player_one_serial + ":" + player_one_serial + ":" + "ENDAPP" + ":" + "NULL", destination="/queue/" + player_one_serial)
@@ -383,7 +456,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.anim.play_animation('anim_pounce_success_01')
 
                 # Remove the MQ message from the message_queue[] list now that we have processed it.
-                message_queue.remove(message)
+                robot_message_queue.remove(message)
 
         # This message is wrong, rather only applicable when play_yes = False.  Will fix later maybe,
         # but probably not until the next application.
@@ -395,7 +468,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 # This is the start of the actual main code.
 
 # First a bunch of variables:
-message_queue = []
+robot_message_queue = []
+human_message_queue = []
 cozmo_supported = False
 vector_supported = False
 final_path = ""
@@ -407,7 +481,6 @@ player_one_serial = ""
 player_two_serial = ""
 mq_server = ""
 mq_port = ""
-config_file = ""
 two_bots_same_computer = False
 
 # This is for getting command line arguments.
@@ -431,7 +504,7 @@ two_bots_same_computer = False
 # be ways but I ran into issues trying it programatically, so I have you tell
 # me what he model is and everything works fine.
 
-opts, args = getopt.getopt(sys.argv[1:], 'c:', ['p1=', 'p2='])
+opts, args = getopt.getopt(sys.argv[1:], 's:p:', ['p1=', 'p2='])
 
 for opt, arg in opts:
     if opt == "--p1":
@@ -440,18 +513,11 @@ for opt, arg in opts:
     elif opt == "--p2":
         player_two_model_and_serial = arg
 
-    elif opt == "-c":
-        config_file = arg
+    elif opt == "-s":
+        mq_server = arg
 
-try:
-    config_file_object = open(config_file, "r")
-
-except:
-    print ("Couldn't open config file: ***" + config_file + "***")
-
-    print ("also what is: ***" + player_one_model_and_serial + "***" + " and ***" + player_two_model_and_serial + "***")
-
-    exit(1)
+    elif opt == "-p":
+        mq_port = arg
 
 if player_one_model_and_serial and player_two_model_and_serial:
     two_bots_same_computer = True
@@ -468,61 +534,6 @@ if mo1:
 if mo2:
     player_two_model = mo2.group(1)
     player_two_serial = mo2.group(3)
-
-# Read in the config file and assign the values in the file to variables
-# The only thing we are really looking for right now is the mq_server (which is an IP)
-# and the mq_port, which is a port number.
-
-# I left in the code for specifying the path of the IBCP directory.  One of my earlier designs needed it,
-# but I since found another way around it.  I left the code in (but commented out) in case we want to
-# revive it.
-config_file_lines = config_file_object.readlines()
-
-for record in config_file_lines:
-    match_object = re.search('(.*?)(\s*)(=)(\s*)(.*)', record)
-
-    if match_object:
-        if match_object.group(1) == "mq_server":
-            mq_server = match_object.group(5)
-            mq_server = mq_server.replace('\'', '')
-
-            print ("mq_server: " + mq_server)
-
-        elif match_object.group(1) == "mq_port":
-            mq_port = match_object.group(5)
-            mq_port = mq_port.replace('\'', '')
-
-            print ("mq_port: " + mq_port)
-
-        #if match_object.group(1) == "linux_application_path":
-        #    linux_path = match_object.group(3)
-        #    linux_path = linux_path.replace('\'', '')
-        #    slash_char = '/'
-
-        #elif match_object.group(1) == "windows_application_path":
-        #    windows_path = match_object.group(3)
-        #    windows_path = windows_path.replace('\'', '')
-        #    slash_char = '\\'
-
-        #elif match_object.group(1) == "mac_path":
-        #    mac_path = match_object.group(3)
-        #    mac_path = mac_path.replace('\'', '')
-        #    slash_char = '/'
-
-        #if sys.platform.startswith('linux'):
-        #    final_path = linux_path
-
-        #elif sys.platform.startswith('win32'):
-        #    final_path = windows_path
-
-        #elif sys.platform.startswith('darwin'):
-        #    final_path = mac_path
-
-        #else:
-        #    print ("Unsupported platform: " + platform)
-        #    exit(2)
-
-#print ("what is final_path: " + final_path)
 
 # Create connection to MQ server.
 try:
@@ -543,6 +554,19 @@ except Exception as e:
 
 #if player_two_serial:
 #    stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
+
+# See if we are a human:
+#if player_one_model == "human" and player_two_model == "human":
+#    the_application("", player_one_model, "", player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
+
+#elif player_one_model == "human" and player_two_model != "human":
+#    the_application("", player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
+
+#elif player_one_model != "human" and player_two_model == "human":
+#    the_application("", "", "", player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
+
+# I THINK WE NEED TO HANDLE THE CASE OF 2 HUMANS HERE...
+
 
 # Now we see if cozmo sdk is installed.  If so we define the function cozmo_program()
 # which will actually call the application.
@@ -620,11 +644,11 @@ if vector_supported:
 
             elif player_one_model == "vector" and player_two_model != "vector":
                 with anki_vector.Robot(player_one_serial) as robot1:
-                    the_application(robot1, player_one_model, "", "", player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
+                    the_application(robot1, player_one_model, "", player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
             elif player_one_model != "vector" and player_two_model == "vector":
                 with anki_vector.Robot(player_two_serial) as robot2:
-                    the_application("", "", robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
+                    the_application("", player_one_model, robot2, player_two_model, player_one_serial, player_two_serial, mq_server, mq_port, stomp_conn)
 
     except:
         gui_output(two_bots_same_computer, "Trouble running vector code", player_one_serial, player_two_serial)
