@@ -75,7 +75,6 @@ layout_main =    [
             [sg.Multiline(default_text='', size=(215, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')],
             [
                 sg.Multiline(default_text=initial_instructions, size=(64, 10), autoscroll=True, do_not_clear=True, enter_submits=True, key='-INSTRUCTIONS-'),
-                sg.Listbox(default_values='', values='', size=(64, 10), key='-ROBOTS-', enable_events=True),
                 sg.Listbox(default_values='', values='', size=(20, 10), key='-APPS-', enable_events=True),
                 sg.Text('Player 1', size=(8, 1), key='-P1LABEL-'),
                 sg.Combo('', key='-P1CHOICE-', size=(15, 1), enable_events=True),
@@ -85,12 +84,6 @@ layout_main =    [
             ],
             [
                 sg.Text('Input when game is active:', size=(66, 1), key='-HUMANINPUTTEXT-'),
-                sg.Text('Model:', size=(7,1)),
-                sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(6, 1)),
-                sg.Text('Serial number:', size=(12, 1)),
-                sg.InputText('', key='-SERIALNUMBER-', size=(9, 1)),
-                sg.Button('Register'),
-                sg.Button('Unregister')
             ],
             [
                 sg.InputText('', key='-HUMANINPUTFIELD-', size=(10, 1))
@@ -119,12 +112,6 @@ window['-MQSERVERINFODATA-'].update(mq_server_port)
 output_list = []
 
 command_ran = False
-
-# Upon start of app, populate the Listbox of registered robots:
-db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
-rows = db_cursor.fetchall()
-
-window['-ROBOTS-'].update(rows)
 
 # Get list of available applications:
 dir_object_list = os.scandir(current_directory + "/applications")
@@ -175,52 +162,7 @@ while True:
         #window['-P1CHOICE-'].update(window['-ROBOTS-'].GetListValues())
         #window['-P2CHOICE-'].update(window['-ROBOTS-'])
 
-    # Look for robots to register:
-    if event_main == "Register":
-        # add serial number to database:
-        # BREAKPOINT for now
-        serial_number = values_main['-SERIALNUMBER-']
-        robot_model = values_main['-ROBOTMODEL-']
 
-        db_cursor.execute("select count(*) from ibcp_robots where serial_number='" + serial_number + "'")
-
-        rows = db_cursor.fetchall()
-
-        row_count = rows[0]
-
-        print ("what is row_count: ***" + str(row_count[0]) + "***")
-
-        if row_count[0] == 0:
-            #insert
-            print ("insert statement is: " + "insert into ibcp_robots values ('" + serial_number + "', '" + robot_model + "', '" + robot_model + ":" + serial_number + "')")
-            db_cursor.execute("insert into ibcp_robots values ('" + serial_number + "', '" + robot_model + "', '" + robot_model + ":" + serial_number + "')")
-
-        else:
-            print ("robot serial number already registered")
-
-        db_connection.commit()
-
-        # Now lets update the window of registered robots.  I believe I want to clear the entire Listbox,
-        # select all records, and append them.
-
-        db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
-        rows = db_cursor.fetchall()
-
-        window['-ROBOTS-'].update(rows)
-        window['-SERIALNUMBER-'].update('')
-
-    if event_main == "Unregister":
-        model_and_serial_number = values_main['-ROBOTS-']
-
-        if model_and_serial_number:
-            db_cursor.execute("delete from ibcp_robots where model_and_serial_number='" + model_and_serial_number[0][0] + "'")
-            db_connection.commit()
-
-            db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
-            rows = db_cursor.fetchall()
-
-            window['-ROBOTS-'].update(rows)
-            window['-SERIALNUMBER-'].update('')
 
 
 
@@ -291,18 +233,35 @@ while True:
                     human_input_field, destination="/queue/" + "human")
 
     if event_main == "Preferences":
-
         # We need layout_preferences here, because PySimpleGUI complains up a storm
         # if you don't.  It want's a clean layout upon creation of window.  So we define it
         # here before the create so it always gets it's clean slate.  I populate the fields
         # from the database before the user see's it, so that works for me.
-        layout_preferences = [
-            [sg.Text('MQ Server:', size=(9, 1)), sg.InputText(default_text='', key='-MQSERVER-', size=(16, 1))],
-            [sg.Text('MQ port:', size=(10, 1)), sg.InputText(default_text='61613', key='-MQPORT-', size=(7, 1))],
-            [sg.Button('Set'), sg.Button('Close')]
+        frame_layout_mq_preferences = [
+                [sg.Text('MQ Server:', size=(9, 1)), sg.InputText(default_text='', key='-MQSERVER-', size=(16, 1))],
+                [sg.Text('MQ port:', size=(9, 1)), sg.InputText(default_text='61613', key='-MQPORT-', size=(7, 1))]
+                #[sg.Button('Set'), sg.Button('Close')]
         ]
 
-        preferences_window = sg.Window('Preferences', layout_preferences, resizable=True, location=[800,400])
+        frame_layout_register_robot_preferences = [
+            [sg.Text('Model:', size=(12,1)), sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(7, 1))],
+
+            [sg.Text('Serial number:', size=(12, 1)), sg.InputText('', key='-SERIALNUMBER-', size=(9, 1)), sg.Listbox(default_values='', values='', size=(64, 5), key='-ROBOTS-', enable_events=True)],
+
+            [sg.Button('Register'), sg.Button('Unregister')]
+        ]
+
+        frame_layout_finish_buttons_preferences = [
+            [sg.Button(button_text='Save and Close', key='-SAVEANDCLOSE-'), sg.Button('Cancel')]
+        ]
+
+        frame_layout_preferences = [
+            [sg.Frame('MQ Settings', frame_layout_mq_preferences)],
+            [sg.Frame('Register Robots', frame_layout_register_robot_preferences)],
+            [sg.Frame('Operations', frame_layout_finish_buttons_preferences)]
+        ]
+
+        preferences_window = sg.Window('Preferences', frame_layout_preferences, resizable=True, location=[800,400])
 
         preferences_window.Finalize()
 
@@ -319,6 +278,11 @@ while True:
                 preferences_window['-MQSERVER-'].update(row[1])
                 preferences_window['-MQPORT-'].update(row[2])
 
+        # Upon start of app, populate the Listbox of registered robots:
+        db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
+        rows = db_cursor.fetchall()
+
+        preferences_window['-ROBOTS-'].update(rows)
 
         event_preferences, values_preferences = preferences_window.read()
 
@@ -326,7 +290,7 @@ while True:
             print ("What is event_preferences before read: " + str(event_preferences))
             print ("What is values_preferences before read: " + str(values_preferences))
 
-            if event_preferences == 'Set':
+            if event_preferences == '-SAVEANDCLOSE-':
                 mq_server = values_preferences['-MQSERVER-']
                 mq_port = values_preferences['-MQPORT-']
 
@@ -349,6 +313,55 @@ while True:
                     print ("update code here")
                     db_cursor.execute("update ibcp_config set key='" + mq_server + "',value='" + mq_port + "' where config_item='mq_config'")
 
+                preferences_window.close()
+                break
+
+            # Look for robots to register:
+            if event_preferences == "Register":
+                # add serial number to database:
+                # BREAKPOINT for now
+                serial_number = values_preferences['-SERIALNUMBER-']
+                robot_model = values_preferences['-ROBOTMODEL-']
+
+                db_cursor.execute("select count(*) from ibcp_robots where serial_number='" + serial_number + "'")
+
+                rows = db_cursor.fetchall()
+
+                row_count = rows[0]
+
+                print ("what is row_count: ***" + str(row_count[0]) + "***")
+
+                if row_count[0] == 0:
+                    #insert
+                    print ("insert statement is: " + "insert into ibcp_robots values ('" + serial_number + "', '" + robot_model + "', '" + robot_model + ":" + serial_number + "')")
+                    db_cursor.execute("insert into ibcp_robots values ('" + serial_number + "', '" + robot_model + "', '" + robot_model + ":" + serial_number + "')")
+
+                else:
+                    print ("robot serial number already registered")
+
+                db_connection.commit()
+
+                # Now lets update the window of registered robots.  I believe I want to clear the entire Listbox,
+                # select all records, and append them.
+
+                db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
+                rows = db_cursor.fetchall()
+
+                preferences_window['-ROBOTS-'].update(rows)
+                preferences_window['-SERIALNUMBER-'].update('')
+
+            if event_preferences == "Unregister":
+                model_and_serial_number = values_preferences['-ROBOTS-']
+
+                if model_and_serial_number:
+                    db_cursor.execute("delete from ibcp_robots where model_and_serial_number='" + model_and_serial_number[0][0] + "'")
+                    db_connection.commit()
+
+                    db_cursor.execute("select model_and_serial_number from ibcp_robots order by rowid")
+                    rows = db_cursor.fetchall()
+
+                    preferences_window['-ROBOTS-'].update(rows)
+                    preferences_window['-SERIALNUMBER-'].update('')
 
                 db_connection.commit()
 
@@ -381,7 +394,8 @@ while True:
     window['-MQSERVERINFODATA-'].update(mq_server_port)
 
     if event_main is None or event_main == 'Exit' or event_main == 'Cancel':
-        print ("AM I BREAKING?")
+        db_connection.close()
+        print ("closed DB connection")
         break
 
     if not command_ran:
