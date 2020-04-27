@@ -2,7 +2,6 @@
 
 import PySimpleGUI as sg
 import subprocess
-from nonblock import nonblock_read
 import os
 import time
 import sys
@@ -34,7 +33,7 @@ def create_initial_tables(db_connection):
 # Begin main code:
 message_queue = []
 
-initial_instructions = "Welcome to IBCP!  To get started, do 2 things:\n\n" + "1. Edit -> Preferences and set the MQ server\n" + "2. Register at least one robot serial number"
+initial_instructions = "Welcome to IBCP!  To get started, do 2 things:\n\n" + "Edit -> Preferences and:\n1. Set the MQ server\n" + "2. Register at least 2 players"
 
 player_one_serial = ""
 player_two_serial = ""
@@ -66,33 +65,51 @@ menu_def = [['&File', ['E&xit']],
             ['&Edit', ['Preferences'] ],
             ['&Help', '&About...'], ]
 
-layout_main =    [
-            [sg.Menu(menu_def, tearoff=True)],
-            [
-                sg.Text('Welcome to IBCP huamn interface!', size=(70, 1)),
-                sg.Text('MQ server info: ', size=(16, 1), key='-MQSERVERINFOLABEL-'),
-                sg.Text('', size=(20, 1), key='-MQSERVERINFODATA-')],
-            [sg.Multiline(default_text='', size=(215, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')],
-            [
-                sg.Multiline(default_text=initial_instructions, size=(64, 10), autoscroll=True, do_not_clear=True, enter_submits=True, key='-INSTRUCTIONS-'),
-                sg.Listbox(default_values='', values='', size=(20, 10), key='-APPS-', enable_events=True),
-                sg.Text('Player 1', size=(8, 1), key='-P1LABEL-'),
-                sg.Combo('', key='-P1CHOICE-', size=(15, 1), enable_events=True),
-                sg.Text('Player 2', size=(8, 1), key='-P2LABEL-'),
-                sg.Combo('', key='-P2CHOICE-', size=(15, 1), enable_events=True),
-                sg.Button('Play')
-            ],
-            [
-                sg.Text('Input when game is active:', size=(66, 1), key='-HUMANINPUTTEXT-'),
-            ],
-            [
-                sg.InputText('', key='-HUMANINPUTFIELD-', size=(10, 1))
-            ],
-            [sg.Submit(), sg.Cancel()]
-            ]
+frame_layout_output_main = [
+    [sg.Multiline(default_text='', size=(190, 40), autoscroll=True, do_not_clear=True, enter_submits=True, key='-OUTPUT-')]
+]
 
-window = sg.Window('IBCP version 0.2', layout_main, resizable=True)
+frame_layout_apps_main = [
+    [sg.Listbox(default_values='', values='', size=(60, 38), key='-APPS-', enable_events=True)],
+]
+
+frame_layout_play_controls_main = [
+    [sg.Text('Player 1', size=(8, 1), key='-P1LABEL-'), sg.Combo('', key='-P1CHOICE-', size=(15, 1), enable_events=True, readonly=True)],
+    [sg.Text('Player 2', size=(8, 1), key='-P2LABEL-'), sg.Combo('', key='-P2CHOICE-', size=(15, 1), enable_events=True, readonly=True)],
+    [sg.Button('Play')],
+    [sg.Text('Input when game is active:', size=(25, 1), key='-HUMANINPUTTEXT-'), sg.InputText('', key='-HUMANINPUTFIELD-', size=(10, 1))],
+    [sg.Button('Submit')]
+]
+
+frame_layout_instructions_main = [
+    [sg.Multiline(default_text=initial_instructions, size=(64, 10), autoscroll=True, do_not_clear=True, enter_submits=True, key='-INSTRUCTIONS-')],
+]
+
+frame_layout_status_main = [
+    [sg.Text('MQ server info: ', size=(16, 1), key='-MQSERVERINFOLABEL-')],
+    [sg.Text('', size=(20, 1), key='-MQSERVERINFODATA-')]
+]
+
+frame_layout_operations_main = [
+    [sg.Exit()]
+]
+
+frame_layout_main = [
+    [sg.Menu(menu_def, tearoff=True)],
+    [sg.Frame('Output Viewer', frame_layout_output_main, key='-OUTPUTFRAME-'), sg.Frame('Applications', frame_layout_apps_main, key='-APPLICATIONSFRAME-')],
+    [sg.Frame('Player Controls', frame_layout_play_controls_main, key='-PLAYERCONTROLSFRAME-'), sg.Frame('Instructions', frame_layout_instructions_main, key='-INSTRUCTIONSFRAME-'), sg.Frame('Status', frame_layout_status_main, key='-STATUSFRAME-')],
+    [sg.Frame('Operations', frame_layout_operations_main, key='-OPERATIONSFRAME-')]
+]
+
+window = sg.Window('IBCP version 0.2', frame_layout_main, resizable=True)
 window.Finalize()
+
+window['-OUTPUTFRAME-'].expand(expand_x=True, expand_y=True)
+window['-APPLICATIONSFRAME-'].expand(expand_x=True, expand_y=True)
+window['-PLAYERCONTROLSFRAME-'].expand(expand_x=True, expand_y=True)
+window['-INSTRUCTIONSFRAME-'].expand(expand_x=True, expand_y=True)
+window['-STATUSFRAME-'].expand(expand_x=True, expand_y=True)
+window['-OPERATIONSFRAME-'].expand(expand_x=True)
 
 # Lets try to populate mq server data here:
 db_cursor.execute("select * from ibcp_config where config_item='mq_config'")
@@ -232,6 +249,13 @@ while True:
                     stomp_conn.send(body='human' + ":" + player_one_serial + ':' + "set_magic_number" + ":" +
                     human_input_field, destination="/queue/" + "human")
 
+                elif player_two_model == "human":
+                    print ("H8: I am sending message to human queue with my quess")
+                    stomp_conn.send(body='human' + ":" + player_two_serial + ':' + "human_guess" + ":" +
+                    human_input_field, destination="/queue/" + "human")
+
+                    window['-HUMANINPUTFIELD-'].update(value="")
+
     if event_main == "Preferences":
         # We need layout_preferences here, because PySimpleGUI complains up a storm
         # if you don't.  It want's a clean layout upon creation of window.  So we define it
@@ -244,7 +268,7 @@ while True:
         ]
 
         frame_layout_register_robot_preferences = [
-            [sg.Text('Model:', size=(12,1)), sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(7, 1))],
+            [sg.Text('Model:', size=(12,1)), sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(7, 1), readonly=True)],
 
             [sg.Text('Serial number:', size=(12, 1)), sg.InputText('', key='-SERIALNUMBER-', size=(9, 1)), sg.Listbox(default_values='', values='', size=(64, 5), key='-ROBOTS-', enable_events=True)],
 

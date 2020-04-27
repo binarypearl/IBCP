@@ -116,7 +116,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
         print ("The magic number is: " + str(magic_number))
 
-    else:
+    elif player_one_serial_saved == player_one_serial and robot1_model == 'human':
         # we need to get input first from human:
         dont_have_human_magic_number = True
         stomp_conn.subscribe(destination='/queue/' + 'human', id=7, ack='auto')
@@ -345,6 +345,37 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                 # This block handles player2 receiving the message to guess a number.
                 elif command == "said" and re.search('Guess a number', payload):
+                    number_to_guess = 0
+
+                    print ("Did we get here and what is player_two_model: " + player_two_model)
+
+                    if player_two_model == "human":
+                        stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
+                        dont_have_human_guess = True
+
+                        # if player2 is a human, we need to scan the human queue for messages,
+                        # which will put in an indefinte delay here.
+                        # Well, indefinte until the human responds.
+                        while dont_have_human_guess:
+                            for human_message in human_message_queue:
+                                gui_output(two_bots_same_computer, "I have a message in human queue...", player_one_serial, player_two_serial)
+
+                                to_robot = human_message.group(1)
+                                from_robot = human_message.group(3)
+                                command = human_message.group(5)
+                                payload = human_message.group(7)
+
+                                if robot2_model == "human" and command == "human_guess":
+                                    number_to_guess = payload
+                                    dont_have_human_guess = False
+
+                                    human_message_queue.remove(human_message)
+
+                            time.sleep(1)
+
+                    # This is the non-human message from robot player 1.
+                    # It contains the cur min and cur max, so we need this
+                    # info regardless if player2 is a robot or human.
                     match_object = re.search('(.*?)(:)(.*?)(:)(.*)', payload)
 
                     if match_object:
@@ -362,7 +393,10 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     # BREAKPOINT Here...
 
                     # Call the algorithm to guess a number:
-                    number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
+
+                    # If we are a human, the guess already came in from the human queue
+                    if robot2_model != "human":
+                        number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
 
                     gui_output(two_bots_same_computer, "<Player 2> I guess: " + str(number_to_guess), player_one_serial, player_two_serial)
                     print ("player 2 is guesing: " + str(number_to_guess))
@@ -378,6 +412,13 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.behavior.drive_straight(distance_mm(20), speed_mmps(200))
                         robot2.behavior.say_text("I guess " + str(number_to_guess), duration_scalar=0.8)
                         robot2.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
+
+                    elif robot2_model == "human":
+                        if robot1_model == "cozmo":
+                            robot1.say_text(player_two_serial + " guessed " + str(number_to_guess), duration_scalar=0.6).wait_for_completed()
+
+                        elif robot1_model == "vector":
+                            robot1.behavior.say_text(player_two_serial + " guessed " + str(number_to_guess), duration_scalar=0.8)
 
                     # Send a message to player1 with player2's guess.
                     stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "said" + ":"
