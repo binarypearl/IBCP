@@ -406,7 +406,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     if robot2_model != "human":
                         number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
 
-                        gui_output(two_bots_same_computer, "[D3]: P2 said-guess a number and we are not human and number_to_guess is: " + number_to_guess, player_one_serial, player_two_serial)
+                        gui_output(two_bots_same_computer, "[D3]: P2 said-guess a number and we are not human and number_to_guess is: " + str(number_to_guess), player_one_serial, player_two_serial)
 
                     else:
                         gui_output(two_bots_same_computer, "[D3a]: P2 said-guess a number and we are human", player_one_serial, player_two_serial)
