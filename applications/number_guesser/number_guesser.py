@@ -476,9 +476,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                     # Guess again!  Also passing in the current_min and current_max values for player 2 to process
                     else:
-                        stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
+                        stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
-                            str(engine_object.get_current_max()), destination="/queue/" + player_one_serial)
+                            str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
 
                         gui_output(two_bots_same_computer, "<Player 1> " + "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()),
