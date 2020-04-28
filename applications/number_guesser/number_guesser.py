@@ -345,11 +345,15 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                 # This block handles player2 receiving the message to guess a number.
                 elif command == "said" and re.search('Guess a number', payload):
+                    gui_output(two_bots_same_computer, "[D0]: P2 begin with message said-guess a number", player_one_serial, player_two_serial)
+
                     number_to_guess = 0
 
                     print ("Did we get here and what is player_two_model: " + player_two_model)
 
                     if player_two_model == "human":
+                        gui_output(two_bots_same_computer, "[D1]: P2 said-guess a number P2 is human", player_one_serial, player_two_serial)
+
                         stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
                         dont_have_human_guess = True
 
@@ -379,6 +383,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     match_object = re.search('(.*?)(:)(.*?)(:)(.*)', payload)
 
                     if match_object:
+                        gui_output(two_bots_same_computer, "[D2]: P2 said-guess a number we matched object", player_one_serial, player_two_serial)
                         # If this script is ran on two different computers, player2 wouldn't know the
                         # current min and current max possibilities.  player1 sends
                         # this in the message, and then player2 sets it's so we are consistent among both player.
@@ -390,6 +395,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         engine_object.set_current_min(cur_min_from_p1)
                         engine_object.set_current_max(cur_max_from_p1)
 
+                    else:
+                        gui_output(two_bots_same_computer, "[D2a]: P2 said-guess a number we did not match object", player_one_serial, player_two_serial)
+
                     # BREAKPOINT Here...
 
                     # Call the algorithm to guess a number:
@@ -397,6 +405,11 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     # If we are a human, the guess already came in from the human queue
                     if robot2_model != "human":
                         number_to_guess = engine_object.guess_a_number(engine_object.get_current_min(), engine_object.get_current_max())
+
+                        gui_output(two_bots_same_computer, "[D3]: P2 said-guess a number and we are not human and number_to_guess is: " + number_to_guess, player_one_serial, player_two_serial)
+
+                    else:
+                        gui_output(two_bots_same_computer, "[D3a]: P2 said-guess a number and we are human", player_one_serial, player_two_serial)
 
                     gui_output(two_bots_same_computer, "<Player 2> I guess: " + str(number_to_guess), player_one_serial, player_two_serial)
                     print ("player 2 is guesing: " + str(number_to_guess))
@@ -409,6 +422,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.drive_straight(distance_mm(-20), speed_mmps(200)).wait_for_completed()
 
                     elif robot2_model == "vector":
+                        gui_output(two_bots_same_computer, "[D4]: P2 said-guess a number and robot2 model is Vector", player_one_serial, player_two_serial)
                         robot2.behavior.drive_straight(distance_mm(20), speed_mmps(200))
                         robot2.behavior.say_text("I guess " + str(number_to_guess), duration_scalar=0.8)
                         robot2.behavior.drive_straight(distance_mm(-20), speed_mmps(200))
@@ -426,6 +440,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                 # player1 compares the guess to see if was out of range, too low, too high, or just right
                 elif command == "said" and re.search('(.*?)(:)(.*)', payload):
+                    gui_output(two_bots_same_computer, "[E0]: P1 said-guess a number begin", player_one_serial, player_two_serial)
+
                     match_object = re.search('(.*?)(:)(.*)', payload)
                     if match_object:
                         number_guessed = int(match_object.group(3))
@@ -452,7 +468,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                             text_to_say = "You guessed it!  The magic number was " + str(magic_number) + " and it took you " + str(engine_object.get_user_guess_count()) + " guesses!"
 
                     if robot1_model == "cozmo":
-                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say)
+                        gui_output(two_bots_same_computer, "<Player 1> " + text_to_say, player_one_serial, player_two_serial)
                         robot1.say_text(text_to_say, duration_scalar=0.6).wait_for_completed()
 
                     elif robot1_model == "vector":
@@ -476,6 +492,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
 
                     # Guess again!  Also passing in the current_min and current_max values for player 2 to process
                     else:
+                        gui_output(two_bots_same_computer, "[E1]: P1 said-guess a number send message to P2", player_one_serial, player_two_serial)
+
                         stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
