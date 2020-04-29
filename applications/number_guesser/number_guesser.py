@@ -338,6 +338,16 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.behavior.say_text(player_one_serial + " says " + payload, duration_scalar=0.8)
 
                     # don't think human needs to do anything here
+                    gui_output(two_bots_same_computer,
+                        body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
+                        + payload  + ":" + str(engine_object.get_current_min()) +
+                        ":" + str(engine_object.get_current_max()),
+
+            player_one_serial,
+            player_two_serial
+
+                    )
+
 
                     stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
                                 + payload  + ":" + str(engine_object.get_current_min()) +
@@ -494,17 +504,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     else:
                         gui_output(two_bots_same_computer, "[E1]: P1 said-guess a number send message to P2", player_one_serial, player_two_serial)
 
-                        gui_output(two_bots_same_computer,
-                            player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
-                                "Guess a number between " + str(engine_object.get_current_min()) + " and " +
-                                str(engine_object.get_current_max()),
-
-                            player_one_serial, player_two_serial
-                        )
-
-                        stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
+                        stomp_conn.send(body=player_one_serial + ":" + player_two_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
-                            str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
+                            str(engine_object.get_current_max()), destination="/queue/" + player_one_serial)
 
                         gui_output(two_bots_same_computer, "<Player 1> " + "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()),
