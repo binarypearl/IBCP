@@ -337,6 +337,8 @@ while True:
                     print ("update code here")
                     db_cursor.execute("update ibcp_config set key='" + mq_server + "',value='" + mq_port + "' where config_item='mq_config'")
 
+                db_connection.commit()
+
                 preferences_window.close()
                 break
 
