@@ -338,7 +338,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         robot2.behavior.say_text(player_one_serial + " says " + payload, duration_scalar=0.8)
 
                     # don't think human needs to do anything here
-                    gui_output(two_bots_same_computer, "body=player_two_serial" + ":" + player_one_serial + ":" + "said" + ":" + payload  + ":" + str(engine_object.get_current_min()) + ":" + str(engine_object.get_current_max()), player_one_serial, player_two_serial)
+                    gui_output(two_bots_same_computer, body + "=player_two_serial" + ":" + player_one_serial + ":" + "said" + ":" + payload  + ":" + str(engine_object.get_current_min()) + ":" + str(engine_object.get_current_max()), player_one_serial, player_two_serial)
 
 
                     stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "said" + ":"
