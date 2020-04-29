@@ -494,6 +494,14 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     else:
                         gui_output(two_bots_same_computer, "[E1]: P1 said-guess a number send message to P2", player_one_serial, player_two_serial)
 
+                        gui_output(two_bots_same_computer,
+                            player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
+                                "Guess a number between " + str(engine_object.get_current_min()) + " and " +
+                                str(engine_object.get_current_max()),
+
+                            player_one_serial, player_two_serial
+                        )
+
                         stomp_conn.send(body=player_two_serial + ":" + player_one_serial + ":" + "say" + ":" +
                             "Guess a number between " + str(engine_object.get_current_min()) + " and " +
                             str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
