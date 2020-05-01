@@ -141,10 +141,20 @@ window['-APPS-'].update(list_of_applications)
 
 event_main, values_main = window.read()
 
+p = "" # hold suprocess return object
+
 while True:
     #event_main, values_main = window.read()
     #window.Finalize()
     print ("Are we in True loop?")
+
+    try:
+        if p.poll() == None:
+            print ("***************************************process still running...***************************************")
+
+    except:
+        print ("-----------------------------------------process not started yet-----------------------------------------")
+
 
     if mq_server != '':
         # Create connection to MQ server.
