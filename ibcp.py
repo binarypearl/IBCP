@@ -217,9 +217,7 @@ while True:
 
             print ("COMMAND IS: " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
 
-            ###p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            os.system(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
-
+            p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
             print ("This is the line after Popen()")
 
