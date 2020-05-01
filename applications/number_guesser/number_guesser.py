@@ -221,6 +221,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
             #     the current_max is 50.
 
             print ("We have a message: " + str(message))
+            gui_output(two_bots_same_computer, "We have a message: " + str(message), player_one_serial, player_two_serial)
+
             to_robot = message.group(1)
             from_robot = message.group(3)
             command = message.group(5)
