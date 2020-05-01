@@ -474,7 +474,7 @@ while True:
         # Remove the MQ message from the message_queue[] list now that we have processed it.
         message_queue.remove(message)
 
-    time.sleep(0.1)
+    #time.sleep(0.1)
 
     event_main, values_main = window.read(timeout=1000)
 
