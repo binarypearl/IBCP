@@ -476,6 +476,6 @@ while True:
 
     #time.sleep(0.1)
 
-    event_main, values_main = window.read(timeout=1000)
+    event_main, values_main = window.read(timeout=400)
 
 window.close()
