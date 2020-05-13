@@ -229,6 +229,8 @@ while True:
 
             p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
+            p.communicate()
+
             print ("This is the line after Popen()")
 
             # Now lets update some parts of the gui:
