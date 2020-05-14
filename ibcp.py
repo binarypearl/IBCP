@@ -41,6 +41,7 @@ mq_server = ""
 mq_port = ""
 mq_connected = False
 list_of_applications = []
+p = ""  # subprocess....
 
 #print ("Debug1: " + os.path.dirname(os.path.realpath(sys.argv[0])))
 #print ("Debug2: " + sys.path[0])
@@ -222,13 +223,6 @@ while True:
             p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
             # BLAH
-            try:
-                if p.poll() == None:
-                    print ("***************************************process still running...***************************************")
-
-            except:
-                print ("-----------------------------------------process not started yet-----------------------------------------")
-
 
             print ("This is the line after Popen()")
 
@@ -445,6 +439,13 @@ while True:
         print ("COMMAND HAS BEEN RAN")
 
     print ("RIGHT BEFORE message_queue processing...")
+
+    try:
+        if p.poll() == None:
+            print ("***************************************process still running...***************************************")
+
+    except:
+        print ("-----------------------------------------process not started yet-----------------------------------------")
 
     for message in message_queue:
         # IBCP message format:  to_robot:from_robot:command:payload
