@@ -42,6 +42,7 @@ mq_port = ""
 mq_connected = False
 list_of_applications = []
 p = ""  # subprocess....
+counter = 0
 
 #print ("Debug1: " + os.path.dirname(os.path.realpath(sys.argv[0])))
 #print ("Debug2: " + sys.path[0])
@@ -442,7 +443,8 @@ while True:
 
     try:
         if p.poll() == None:
-            print ("***************************************process still running...***************************************")
+            print ("***************************************process still running...counter = " + counter + "***************************************")
+            counter += 1
 
     except:
         print ("-----------------------------------------process not started yet-----------------------------------------")
