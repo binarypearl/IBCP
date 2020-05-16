@@ -213,15 +213,22 @@ while True:
             print ("P1M: " + player_one_model)
             print ("P2M: " + player_two_model)
 
-            if player_one_serial:
+            if player_one_serial and player_one_serial != "remote":
                 stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
 
-            if player_two_serial:
+            if player_two_serial and player_two_serial != "remote":
                 stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
 
             print ("COMMAND IS: " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
 
-            p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            if player_one_model == "remote":
+                p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+            elif player_two_model == "remote":
+                p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+            else:
+                p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
             # BLAH
 
@@ -275,7 +282,7 @@ while True:
         ]
 
         frame_layout_register_robot_preferences = [
-            [sg.Text('Model:', size=(12,1)), sg.Combo(['vector', 'cozmo', 'human'], default_value='vector', key='-ROBOTMODEL-', size=(7, 1), readonly=True)],
+            [sg.Text('Model:', size=(12,1)), sg.Combo(['vector', 'cozmo', 'human', 'remote'], default_value='vector', key='-ROBOTMODEL-', size=(7, 1), readonly=True)],
 
             [sg.Text('Serial number:', size=(12, 1)), sg.InputText('', key='-SERIALNUMBER-', size=(9, 1)), sg.Listbox(default_values='', values='', size=(64, 5), key='-ROBOTS-', enable_events=True)],
 
