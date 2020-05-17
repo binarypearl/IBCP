@@ -95,6 +95,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
     player_one_serial_saved = player_one_serial     # Make sure Player 1 starts...might be a better way to handle this.
     number_to_guess = 0                             # Store players 2 guess
 
+
     gui_output(two_bots_same_computer, "WELCOME TO NUMBER GUESSER USING IBCP VERSION 0.2!\n", player_one_serial, player_two_serial)
 
     gui_output(two_bots_same_computer, "Might be waking up robots, please wait...", player_one_serial, player_two_serial)
@@ -239,6 +240,23 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
             # to respond.  We won't go into the actual game until then, so play_yes will be False
             # until robot2 responds.
             if not play_yes:
+                if two_bots_same_computer:
+                    play_yes = True
+
+                else:
+                    # player 2 code:
+                    if command == "play_request" and payload == "number_guessser":
+                        stomp_conn.send(body=from_robot + ":" + player_two_serial + ':' + "play_response" + ":" +
+                                    "yes", destination="/queue/" + from_robot)
+
+                        play_yes = True
+
+                    # player 1 code:
+                    if command == "play_response" and payload == "yes":
+                        play_yes = True
+
+                '''
+                #legacy...
                 print ("We are in if not play_yes code")
                 print ("player_one_serial: " + player_one_serial)
                 print ("player_two_serial: " + player_two_serial)
@@ -279,6 +297,10 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                                 "from_robot: " + player_two_serial + " to: " + from_robot +
                                 " with the command play_request with the payload number_guesser" +
                                 " to the destination /queue/" + from_robot)
+
+
+                '''
+
 
                 # This handles the situation if player1 and player2 are being ran from 2 different computers.
                 # If we run this script on the same computer with both player1 and player2, we know their
