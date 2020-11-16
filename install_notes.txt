@@ -1,0 +1,14 @@
+pip3 install PySimpleGUI
+pip3 install stomp.py
+
+things to fix:
+
+number_guesser:
+If P1 is human and P2 is robot, at end say: 
+"...it took me X guesses instead of it took you X guesses"
+
+In player controls, hide the elements for playing number_guesser until game is active.
+
+Take out debug statements
+
+killall number_guesser.py if we have stale process
