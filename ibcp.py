@@ -150,6 +150,12 @@ event_main, values_main = window.read()
 
 p = "" # hold suprocess return object
 
+connected_to_mq_server = False
+
+# I think what's happening here...is that we are constantly issuing new connections to MQ
+# However when I change the logic to just to connect once, the program exits or crashes.
+# Re-look at the logic here.  If with luck, maybe this solves are windows hanging issue.
+
 while True:
     if mq_server != '':
         # Create connection to MQ server.
@@ -166,6 +172,11 @@ while True:
             stomp_conn.connect('admin', 'admin', wait=True)
 
         except Exception as e:
+            # This case needs to be handled better.  If we got here, we have a configured MQ server but
+            # it can't connect to it (eg service down or firewall).
+            # IBCP will more-or-less hang, but you can still get to preferences to change server ip/port
+            # if needed.  But it will be slow, and the rest of the operations (like selecting a game)
+            # still look like they are available to be selected.
             print ("Will try connecting to mq server in 1 second...")
             time.sleep(1)
 

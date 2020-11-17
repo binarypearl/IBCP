@@ -240,6 +240,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                             str(engine_object.get_current_max()), player_one_serial, player_two_serial)
 
                         initial_send = True
+
                     else:
                         initial_send = True
 
@@ -321,7 +322,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         gui_output(two_bots_same_computer, "<Player 2> I guess: " + str(number_to_guess), player_one_serial, player_two_serial)
 
                     else:
-                        gui_output(two_bots_same_computer, "<Player 2> " + player_two_serial + " guess: " + str(number_to_guess), player_one_serial, player_two_serial)
+                        gui_output(two_bots_same_computer, "<Player 2> " + player_two_serial + " guesses: " + str(number_to_guess), player_one_serial, player_two_serial)
 
                     if robot2_model == "cozmo":
                         robot2.drive_straight(distance_mm(20), speed_mmps(200)).wait_for_completed()
@@ -347,11 +348,24 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                 # player1 compares the guess to see if was out of range, too low, too high, or just right
                 elif command == "said" and re.search('(.*?)(:)(.*)', payload):
 
-                    match_object = re.search('(.*?)(:)(.*)', payload)
-                    if match_object:
-                        number_guessed = int(match_object.group(3))
+                    try:
+                        match_object = re.search('(.*?)(:)(.*)', payload)
+                        if match_object:
+                            number_guessed = int(match_object.group(3))
 
-                    if number_guessed < engine_object.get_current_min() or number_guessed > engine_object.get_current_max():
+                    except:
+                        # I don't like doing it this way...but it works for now.  Basically if the human
+                        # guessed something that's not a number, set it to -99999, which is a code indicating
+                        # that the human guessed something with garbage data in it.  However if
+                        # the human guessed -99999, it would say 'That was not a number!' instead of
+                        # 'Number out of range!'.  It's wrong, but this stuff is complex enough, sometimes,
+                        # whatever works.
+                        number_guessed = -99999
+
+                    if number_guessed == -99999:
+                        text_to_say = "That was not a number!"
+
+                    elif number_guessed < engine_object.get_current_min() or number_guessed > engine_object.get_current_max():
                         text_to_say = "Number out of range!"
 
                     elif number_guessed < magic_number:
