@@ -185,7 +185,8 @@ connected_to_mq_server = False
 # Initial connection attempt:
 stomp_conn = stomp.Connection([(mq_server, mq_port)])
 stomp_conn.set_listener('', MyListener())
-connect_to_mq_server(stomp_conn)
+stomp_conn.connect('admin', 'admin', wait=True)
+#connect_to_mq_server(stomp_conn)
 
 while True:
     if event_main == "-APPS-":
