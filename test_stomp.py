@@ -24,8 +24,12 @@ class MyListener(stomp.ConnectionListener):
         print ('disconnected from Apache MQ server')
         connect_to_mq_server(self.conn)
 
-stomp_conn = stomp.Connection([("192.168.1.153", 61613)])
-stomp_conn.set_listener('', MyListener())
-connect_to_mq_server(stomp_conn)
+try:
+    stomp_conn = stomp.Connection([("192.168.1.153", 61613)])
+    stomp_conn.set_listener('', MyListener())
+    connect_to_mq_server(stomp_conn)
 
-stomp_conn.subscribe(destination='/queue/' + 'test_stomp', id=5, ack='auto')
+    stomp_conn.subscribe(destination='/queue/' + 'test_stomp', id=5, ack='auto')
+
+except Exception as e:
+    print (e)
