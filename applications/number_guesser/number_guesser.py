@@ -485,7 +485,11 @@ two_bots_same_computer = False
 # be ways but I ran into issues trying it programatically, so I have you tell
 # me what model he is and everything works fine.
 
-opts, args = getopt.getopt(sys.argv[1:], 's:p:', ['p1=', 'p2='])
+try:
+    opts, args = getopt.getopt(sys.argv[1:], 's:p:', ['p1=', 'p2='])
+
+except Exception as e:
+    print ("Getopt error: " + str(e))
 
 for opt, arg in opts:
     print ("F0: " + opt)
