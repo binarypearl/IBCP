@@ -485,6 +485,10 @@ two_bots_same_computer = False
 # be ways but I ran into issues trying it programatically, so I have you tell
 # me what model he is and everything works fine.
 
+
+for x in sys.argv:
+    print ("x is: " + x)
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], 's:p:', ['p1=', 'p2='])
 
