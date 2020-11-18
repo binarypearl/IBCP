@@ -488,6 +488,9 @@ two_bots_same_computer = False
 opts, args = getopt.getopt(sys.argv[1:], 's:p:', ['p1=', 'p2='])
 
 for opt, arg in opts:
+    print ("F0: " + opt)
+    print ("F1: " + arg)
+
     if opt == "--p1":
         player_one_model_and_serial = arg
 
