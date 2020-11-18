@@ -31,6 +31,8 @@ def connect_to_mq_server(conn):
             # Should paramerize this at some point so people can change it to whatever they want.
             stomp_conn.connect('admin', 'admin', wait=True)
 
+            print ("Just connected to stomp")
+
         except Exception as e:
             # This case needs to be handled better.  If we got here, we have a configured MQ server but
             # it can't connect to it (eg service down or firewall).
@@ -184,6 +186,8 @@ connected_to_mq_server = False
 stomp_conn = stomp.Connection([(mq_server, mq_port)])
 stomp_conn.set_listener('', MyListener())
 connect_to_mq_server(stomp_conn)
+
+print ("Do we have a stomp_conn object: " + stomp_conn)
 
 while True:
     if event_main == "-APPS-":
