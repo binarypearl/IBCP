@@ -187,8 +187,6 @@ stomp_conn = stomp.Connection([(mq_server, mq_port)])
 stomp_conn.set_listener('', MyListener())
 connect_to_mq_server(stomp_conn)
 
-print ("Do we have a stomp_conn object: " + stomp_conn)
-
 while True:
     if event_main == "-APPS-":
         temp_list = []
