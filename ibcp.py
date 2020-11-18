@@ -203,8 +203,12 @@ while True:
             print ("DD0")
 
             if values_main['-APPS-'][0] == "number_guesser":
+                print ("DD1")
+
                 db_cursor.execute("select serial_number,model from ibcp_robots where model_and_serial_number='" + values_main['-P1CHOICE-'] + "'")
                 rows = db_cursor.fetchall()
+
+                print ("DD2")
 
                 player_one_serial = rows[0][0]
                 player_one_model = rows[0][1]
@@ -212,11 +216,17 @@ while True:
                 db_cursor.execute("select serial_number,model from ibcp_robots where model_and_serial_number='" + values_main['-P2CHOICE-'] + "'")
                 rows = db_cursor.fetchall()
 
+                print ("DD3")
+
                 player_two_serial = rows[0][0]
                 player_two_model = rows[0][1]
 
+                print ("DD4")
+
                 if player_one_serial and player_one_serial != "remote":
                     stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
+
+                print ("DD5")
 
                 if player_two_serial and player_two_serial != "remote":
                     stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
