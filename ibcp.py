@@ -21,6 +21,25 @@ import stomp                # For Apache MQ messaging
 import re
 import sqlite3
 
+def connect_to_mq_server(conn):
+    if mq_server != '':
+        # Create connection to MQ server.
+        try:
+            # This is weird, when apps try to create their own username/password mechanims and it's just
+            # like, what were they thinking?  ActiveMQ defaults to admin/admin in here and it works.
+            # Really secure, but...at least it works.
+            # Should paramerize this at some point so people can change it to whatever they want.
+            stomp_conn.connect('admin', 'admin', wait=True)
+
+        except Exception as e:
+            # This case needs to be handled better.  If we got here, we have a configured MQ server but
+            # it can't connect to it (eg service down or firewall).
+            # IBCP will more-or-less hang, but you can still get to preferences to change server ip/port
+            # if needed.  But it will be slow, and the rest of the operations (like selecting a game)
+            # still look like they are available to be selected.
+            print ("Will try connecting to mq server in 1 second...")
+            time.sleep(1)
+
 class MyListener(stomp.ConnectionListener):
     def on_error(self, headers, message):
         print('received an error "%s"' % message)
@@ -32,6 +51,11 @@ class MyListener(stomp.ConnectionListener):
 
         if match_object:
             message_queue.append(match_object)
+
+    def on_disconnected(self, headres, message):
+        print ('disconnected from Apache MQ server')
+        connect_to_mq_server(self.conn)
+
 
 def create_initial_tables(db_connection):
     db_cursor = db_connection.cursor()
@@ -156,30 +180,12 @@ connected_to_mq_server = False
 # However when I change the logic to just to connect once, the program exits or crashes.
 # Re-look at the logic here.  If with luck, maybe this solves are windows hanging issue.
 
+# Initial connection attempt:
+stomp_conn = stomp.Connection([(mq_server, mq_port)])
+stomp_conn.set_listener('', MyListener())
+connect_to_mq_server(stomp_conn)
+
 while True:
-    if mq_server != '':
-        # Create connection to MQ server.
-        try:
-            # IP and port of MQ server.  Defined in ibcp.cfg.
-            stomp_conn = stomp.Connection([(mq_server, mq_port)])
-            stomp_conn.set_listener('', MyListener())
-            mq_connected = True
-
-            # This is weird, when apps try to create their own username/password mechanims and it's just
-            # like, what were they thinking?  ActiveMQ defaults to admin/admin in here and it works.
-            # Really secure, but...at least it works.
-            # Should paramerize this at some point so people can change it to whatever they want.
-            stomp_conn.connect('admin', 'admin', wait=True)
-
-        except Exception as e:
-            # This case needs to be handled better.  If we got here, we have a configured MQ server but
-            # it can't connect to it (eg service down or firewall).
-            # IBCP will more-or-less hang, but you can still get to preferences to change server ip/port
-            # if needed.  But it will be slow, and the rest of the operations (like selecting a game)
-            # still look like they are available to be selected.
-            print ("Will try connecting to mq server in 1 second...")
-            time.sleep(1)
-
     if event_main == "-APPS-":
         temp_list = []
 
