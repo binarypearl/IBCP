@@ -223,6 +223,8 @@ while True:
 
                 print ("DD4")
 
+                print ("Who is player_one_serial: " + player_one_serial)
+
                 if player_one_serial and player_one_serial != "remote":
                     stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_one_serial, id=5, ack='auto')
 
