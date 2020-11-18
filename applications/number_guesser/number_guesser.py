@@ -503,6 +503,11 @@ for opt, arg in opts:
 if player_one_model_and_serial and player_two_model_and_serial:
     two_bots_same_computer = True
 
+print ("E0: " + player_one_model_and_serial)
+print ("E1: " + player_two_model_and_serial)
+print ("E2: " + mq_server)
+print ("E3: " + mq_port)
+
 # parse out model and serial number:
 # mo stands for 'model object'
 mo1 = re.search('(.*?)(:)(.*)', player_one_model_and_serial)
