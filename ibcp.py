@@ -200,6 +200,8 @@ while True:
 
     if event_main == "Play":
         try:
+            print ("DD0")
+
             if values_main['-APPS-'][0] == "number_guesser":
                 db_cursor.execute("select serial_number,model from ibcp_robots where model_and_serial_number='" + values_main['-P1CHOICE-'] + "'")
                 rows = db_cursor.fetchall()
