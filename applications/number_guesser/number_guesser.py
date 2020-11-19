@@ -546,6 +546,9 @@ try:
 except Exception as e:
     print ("error: " + str(e))
 
+print ("PREMATURE EXIT...")
+sys.exit(1)
+
 # Now we see if cozmo sdk is installed.  If so we define the function cozmo_program()
 # which will actually call the application.
 # Note that 2 player cozmo on the same computer is not supported.  2 player cozmo on differnt computers
