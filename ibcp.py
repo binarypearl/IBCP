@@ -236,16 +236,16 @@ while True:
                 if player_two_serial and player_two_serial != "remote":
                     stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
 
-                print ("BACK END COMMAND IS: " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
+                print ("BACK END COMMAND IS: " + "python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
 
                 if player_one_model == "remote":
-                    p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
                 elif player_two_model == "remote":
-                    p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
                 else:
-                    p = subprocess.Popen(current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
                 # Lets enable number_guesser specific controls here:
                 window['-HUMANINPUTTEXT-'].update(visible=True)
