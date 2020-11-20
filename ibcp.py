@@ -20,6 +20,7 @@ import sys
 import stomp                # For Apache MQ messaging
 import re
 import sqlite3
+import platform
 
 def connect_to_mq_server(conn):
     if mq_server != '':
@@ -188,6 +189,9 @@ stomp_conn.set_listener('', MyListener())
 stomp_conn.connect('admin', 'admin', wait=True)
 #connect_to_mq_server(stomp_conn)
 
+# temp...space after is intentional
+python3_executable = "oops_python_executable_not_set "
+
 while True:
     if event_main == "-APPS-":
         temp_list = []
@@ -236,16 +240,26 @@ while True:
                 if player_two_serial and player_two_serial != "remote":
                     stomp_conn.subscribe(destination='/queue/' + 'ng_output_' + player_two_serial, id=6, ack='auto')
 
-                print ("BACK END COMMAND IS: " + "python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
+                # Gahhh...python3.8 (at least in Windows) has a bug where is throws an expception on exit with disconnecting.
+                # It's throwing my stuff off in Windows I belive, so I'm going to require python3.6.  It's ugggggllyyyy
+                # But if it works, then it works.
 
-                if player_one_model == "remote":
-                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                print ("BACK END COMMAND IS sort of...: " + "python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
 
-                elif player_two_model == "remote":
-                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                if platform.system() == 'Windows':
+                    python3_executable = "C:\\Users\\shaun\\AppData\\Local\\Programs\\Python\\Python36\\python.exe "
 
                 else:
-                    p = subprocess.Popen("python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    python3_executable = "python3 "
+
+                if player_one_model == "remote":
+                    p = subprocess.Popen(python3_executable + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+                elif player_two_model == "remote":
+                    p = subprocess.Popen(python3_executable + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+                else:
+                    p = subprocess.Popen(python3_executable + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
                 # Lets enable number_guesser specific controls here:
                 window['-HUMANINPUTTEXT-'].update(visible=True)
