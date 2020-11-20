@@ -247,7 +247,7 @@ while True:
                 print ("BACK END COMMAND IS sort of...: " + "python3 " + current_directory + "/applications/" + values_main['-APPS-'][0] + "/number_guesser.py -s " + mq_server + " -p " + mq_port + " --p1 " + values_main['-P1CHOICE-'] + " --p2 " + values_main['-P2CHOICE-'])
 
                 if platform.system() == 'Windows':
-                    python3_executable = "C:\\Users\\shaun\\AppData\\Local\\Programs\\Python\\Python36\\python.exe "
+                    python3_executable = "C:\\Users\\shaun\\AppData\\Local\\Programs\\Python\\Python39\\python.exe "
                     print ("Making sure this is Windows...")
 
                 else:
