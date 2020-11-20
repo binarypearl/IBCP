@@ -19,6 +19,7 @@ import getopt               # Command line processing
 import stomp                # For Apache MQ messaging
 import time                 # For sleeping.  I use a 1 second delay before polling for MQ messages
 import traceback            # Gives stack trace in non normal situations
+import logging              # Log to file, especially since we can't see this output at a console
 from sys import platform    # Determine if we are Linux Windows or Mac
 
 # This gets our number_guesser_engine class so we can create an object from it
@@ -475,6 +476,8 @@ mq_server = ""
 mq_port = ""
 two_bots_same_computer = False
 
+logging.basicConfig(filename='number_guesser.log', level=logging.DEBUG)
+
 # This is for getting command line arguments.
 
 # Note:  If you have ever used Anki's Vector SDK examples, you may be faimilar with
@@ -525,6 +528,13 @@ print ("E0: " + player_one_model_and_serial)
 print ("E1: " + player_two_model_and_serial)
 print ("E2: " + mq_server)
 print ("E3: " + mq_port)
+
+logging.debug("---BEGIN GAME---")
+logging.debug("E0: " + player_one_model_and_serial)
+logging.debug("E1: " + player_two_model_and_serial)
+logging.debug("E2: " + mq_server)
+logging.debug("E3: " + mq_port)
+logging.debug("---END GAME---")
 
 # parse out model and serial number:
 # mo stands for 'model object'
