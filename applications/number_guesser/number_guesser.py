@@ -207,6 +207,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
             # to respond.  We won't go into the actual game until then, so play_yes will be False
             # until robot2 responds.
             if not play_yes:
+                print ("Z3:  if not play_yes.  If we see this when waiting...we got an issue")
+
                 if two_bots_same_computer:
                     play_yes = True
 
