@@ -236,6 +236,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     player_two_serial = to_robot
 
             elif play_yes:
+                print ("Z4:  this is play_yes...")
                 # If we got here, now we play the actual game.  Perhaps I over complicated this
                 # inital part, but I use a boolean to kick off the inital send to get things going.
 
