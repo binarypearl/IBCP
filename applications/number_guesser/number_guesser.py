@@ -299,6 +299,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                         # which will put in an indefinte delay here.
                         # Well, indefinte until the human responds.
                         while dont_have_human_guess:
+                            print ("Z97:  Waiting for a human guess...")
+
                             for human_message in human_message_queue:
                                 to_robot = human_message.group(1)
                                 from_robot = human_message.group(3)
