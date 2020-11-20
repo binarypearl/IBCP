@@ -163,6 +163,9 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         stomp_conn.subscribe(destination='/queue/' + player_two_serial, id=2, ack='auto')
         stomp_conn.subscribe(destination='/queue/' + 'number_guesser', id=3, ack='auto')
 
+    if player_two_model == "human":
+        stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
+
     while not game_complete:
         # Now we enter the main game loop.  We don't exit here until the game is over.
 
@@ -276,7 +279,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                     number_to_guess = 0
 
                     if player_two_model == "human":
-                        stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
+                        #stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
                         dont_have_human_guess = True
 
                         # if player2 is a human, we need to scan the human queue for messages,
