@@ -469,6 +469,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         print ("Z98: sleeping for 1...")
         time.sleep(1)
 
+    print ("Z50: Do you see me?")
+
 # This is the start of the actual main code.
 
 # First a bunch of variables:
