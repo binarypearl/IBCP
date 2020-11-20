@@ -52,9 +52,11 @@ class MyListener(stomp.ConnectionListener):
         if match_object:
             if match_object.group(1) == "human":
                 human_message_queue.append(match_object)
+                print ("Z1A:  Added to human message queue")
 
             else:
                 robot_message_queue.append(match_object)
+                print ("Z1B:  Added to robot message queue")
 
 
 # Handle ctrl-c, not currently working, will fix later.
