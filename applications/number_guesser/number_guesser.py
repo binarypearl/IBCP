@@ -641,3 +641,5 @@ else:
 if __name__ == '__main__':
     if vector_supported:
         vector_code()
+
+print ("Z99: umm...")
