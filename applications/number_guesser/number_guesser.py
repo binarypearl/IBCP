@@ -119,7 +119,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         # we need to get input first from human:
         dont_have_human_magic_number = True
         stomp_conn.subscribe(destination='/queue/' + 'human', id=7, ack='auto')
-        stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=9, ack='auto')
+        stomp_conn.subscribe(destination='/queue/' + player_one_serial, id=1, ack='auto')
 
         gui_output(two_bots_same_computer, "waiting for human to set a magic number...", player_one_serial, player_two_serial)
 
