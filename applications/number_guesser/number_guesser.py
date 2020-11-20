@@ -170,6 +170,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         stomp_conn.subscribe(destination='/queue/' + 'human', id=11, ack='auto')
 
     while not game_complete:
+        print ("Z2: begin of not game_complete while loop")
         # Now we enter the main game loop.  We don't exit here until the game is over.
 
         # This is where we look at the messages that came on to our queue.
