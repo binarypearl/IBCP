@@ -198,6 +198,8 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
             command = message.group(5)
             payload = message.group(7)
 
+            print ("Z0")
+
             # First we need to send a message to /queue/number_guesser and wait for another robot
             # to respond.  We won't go into the actual game until then, so play_yes will be False
             # until robot2 responds.
