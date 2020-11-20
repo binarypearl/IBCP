@@ -274,6 +274,10 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
                                 + payload  + ":" + str(engine_object.get_current_min()) +
                                 ":" + str(engine_object.get_current_max()), destination="/queue/" + player_two_serial)
 
+                    print ("body=player_two_serial:" + player_one_serial + ":" + "said" + ":"
+                                + payload  + ":" + str(engine_object.get_current_min()) +
+                                ":" + str(engine_object.get_current_max())" + "destination=/queue/" + player_two_serial)
+
                 # This block handles player2 receiving the message to guess a number.
                 elif command == "said" and re.search('Guess a number', payload):
                     number_to_guess = 0
