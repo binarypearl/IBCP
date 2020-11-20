@@ -464,6 +464,7 @@ def the_application(robot1, robot1_model, robot2, robot2_model, player_one_seria
         # We also wait 1 second so we don't go in a repaid loop and spike the cpu.  Basically every 1 second, we
         # check for new MQ messages.
         #print ("Waiting for another player...")
+        print ("Z98: sleeping for 1...")
         time.sleep(1)
 
 # This is the start of the actual main code.
