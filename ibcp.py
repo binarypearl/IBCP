@@ -248,6 +248,7 @@ while True:
 
                 if platform.system() == 'Windows':
                     python3_executable = "C:\\Users\\shaun\\AppData\\Local\\Programs\\Python\\Python36\\python.exe "
+                    print ("Making sure this is Windows...")
 
                 else:
                     python3_executable = "python3 "
